@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { computed, onMounted, ref } from "vue";
+import ChartCard from "../../components/ChartCard.vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
 
 import {
   getDashboardStats,
   getRecentMembers,
-  getRecentTransactions
+  getRecentTransactions,
 } from "../../services/dashboard.service";
 
 const loading = ref(true);
@@ -14,7 +15,7 @@ const errorMessage = ref("");
 const stats = ref({
   totalMembers: 0,
   totalSavings: 0,
-  activeLoans: 0
+  activeLoans: 0,
 });
 
 const members = ref([]);
@@ -22,18 +23,25 @@ const transactions = ref([]);
 
 const formatNumber = (value) => Number(value || 0).toLocaleString();
 const formatCurrency = (value) => `${formatNumber(value)} TZS`;
-const unwrapData = (response, fallback) => response?.data?.data ?? response?.data ?? fallback;
+const unwrapData = (response, fallback) =>
+  response?.data?.data ?? response?.data ?? fallback;
 const unwrapArray = (response) => {
   const value = unwrapData(response, []);
   return Array.isArray(value) ? value : [];
 };
 
-const depositCount = computed(() =>
-  transactions.value.filter((transaction) => transaction.transaction_type === "deposit").length
+const depositCount = computed(
+  () =>
+    transactions.value.filter(
+      (transaction) => transaction.transaction_type === "deposit",
+    ).length,
 );
 
-const withdrawalCount = computed(() =>
-  transactions.value.filter((transaction) => transaction.transaction_type !== "deposit").length
+const withdrawalCount = computed(
+  () =>
+    transactions.value.filter(
+      (transaction) => transaction.transaction_type !== "deposit",
+    ).length,
 );
 
 const fetchDashboard = async () => {
@@ -41,26 +49,21 @@ const fetchDashboard = async () => {
     loading.value = true;
     errorMessage.value = "";
 
-    const [
-      statsRes,
-      membersRes,
-      transactionsRes
-    ] = await Promise.all([
+    const [statsRes, membersRes, transactionsRes] = await Promise.all([
       getDashboardStats(),
       getRecentMembers(),
-      getRecentTransactions()
+      getRecentTransactions(),
     ]);
 
     stats.value = unwrapData(statsRes, {
       totalMembers: 0,
       totalSavings: 0,
-      activeLoans: 0
+      activeLoans: 0,
     });
 
     members.value = unwrapArray(membersRes);
 
     transactions.value = unwrapArray(transactionsRes);
-
   } catch (error) {
     console.error("Dashboard Error:", error);
     errorMessage.value =
@@ -74,6 +77,17 @@ const fetchDashboard = async () => {
 
 onMounted(() => {
   fetchDashboard();
+});
+
+// local reactive used for filtering UI only
+const search = ref("");
+const filteredMembers = computed(() => {
+  const q = (search.value || "").toLowerCase().trim();
+  if (!q) return members.value;
+  return members.value.filter((m) => {
+    const name = `${m.first_name || ""} ${m.last_name || ""}`.toLowerCase();
+    return name.includes(q) || (m.phone || "").includes(q);
+  });
 });
 </script>
 
@@ -103,87 +117,116 @@ onMounted(() => {
     </div>
 
     <div v-else class="dashboard-shell">
-      
+      <!-- Hero stat cards -->
+      <section class="stat-cards" aria-label="Top statistics">
+        <div class="stat-card">
+          <div class="stat-body">
+            <small class="stat-kicker">Total Users</small>
+            <div class="stat-value">{{ formatNumber(stats.totalMembers) }}</div>
+            <div class="stat-sub">{{ members.length }} joined recently</div>
+          </div>
+          <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+        </div>
 
-      <section class="stats-grid" aria-label="Dashboard statistics">
-        <article class="stat-card members-card">
-          <div class="stat-topline">
-            <span class="stat-icon">
-              <i class="bi bi-people-fill"></i>
-            </span>
-            <span class="trend-pill positive">
-              <i class="bi bi-arrow-up-right"></i>
-              Active
-            </span>
+        <div class="stat-card">
+          <div class="stat-body">
+            <small class="stat-kicker">Total Deposit</small>
+            <div class="stat-value large">
+              {{ formatNumber(stats.totalSavings) }} TZS
+            </div>
+            <div class="stat-sub">{{ depositCount }} deposits</div>
           </div>
-          <div>
-            <p>Total Members</p>
-            <h2>{{ formatNumber(stats.totalMembers) }}</h2>
-          </div>
-        </article>
+          <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+        </div>
 
-        <article class="stat-card savings-card">
-          <div class="stat-topline">
-            <span class="stat-icon">
-              <i class="bi bi-wallet2"></i>
-            </span>
-            <span class="trend-pill positive">
-              <i class="bi bi-shield-check"></i>
-              Secure
-            </span>
+        <div class="stat-card">
+          <div class="stat-body">
+            <small class="stat-kicker">Total Savings</small>
+            <div class="stat-value large">
+              {{ formatNumber(stats.totalSavings) }} TZS
+            </div>
+            <div class="stat-sub">Total saved amount</div>
           </div>
-          <div>
-            <p>Total Savings</p>
-            <h2>{{ formatCurrency(stats.totalSavings) }}</h2>
-          </div>
-        </article>
+          <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+        </div>
 
-        <article class="stat-card loans-card">
-          <div class="stat-topline">
-            <span class="stat-icon">
-              <i class="bi bi-bank2"></i>
-            </span>
-            <span class="trend-pill attention">
-              <i class="bi bi-clock-history"></i>
-              Current
-            </span>
+        <div class="stat-card">
+          <div class="stat-body">
+            <small class="stat-kicker">Total Loans</small>
+            <div class="stat-value">{{ formatNumber(stats.activeLoans) }}</div>
+            <div class="stat-sub">Active loan accounts</div>
           </div>
-          <div>
-            <p>Active Loans</p>
-            <h2>{{ formatNumber(stats.activeLoans) }}</h2>
-          </div>
-        </article>
+          <div class="stat-icon"><i class="bi bi-bank2"></i></div>
+        </div>
       </section>
 
-      <section class="content-grid">
-        <article class="dashboard-card members-panel">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">People</span>
-              <h2>Recent Members</h2>
-            </div>
-            <span class="count-badge">{{ members.length }}</span>
-          </div>
-
-          <div v-if="members.length" class="member-list">
-            <div v-for="m in members" :key="m.id" class="member-row">
-              <div class="avatar">
-                {{ (m.first_name || "M").charAt(0) }}{{ (m.last_name || "").charAt(0) }}
+      <!-- Chart + Right column layout -->
+      <section class="visual-grid">
+        <div class="chart-wrap">
+          <article class="dashboard-card chart-panel">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">Deposit Volume</span>
+                <h2>Credited deposits during the last 14 days</h2>
               </div>
-              <div class="member-info">
-                <strong>{{ m.first_name }} {{ m.last_name }}</strong>
-                <span>{{ m.phone }}</span>
-              </div>
-              <i class="bi bi-chevron-right"></i>
+              <a class="view-all" href="#">View All</a>
             </div>
-          </div>
 
-          <div v-else class="empty-state">
-            <i class="bi bi-person-plus"></i>
-            <span>No members found</span>
-          </div>
-        </article>
+            <ChartCard :transactions="transactions" :days="14" />
+          </article>
+        </div>
 
+        <aside class="right-column">
+          <article class="dashboard-card members-panel sticky-members">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">Recent Accounts</span>
+                <h2>Recent Members</h2>
+              </div>
+              <span class="count-badge">{{ members.length }}</span>
+            </div>
+
+            <div class="members-search">
+              <input
+                v-model="search"
+                class="form-control"
+                placeholder="Search members..."
+              />
+            </div>
+
+            <div v-if="filteredMembers.length" class="member-list">
+              <div v-for="m in filteredMembers" :key="m.id" class="member-row">
+                <div class="avatar">
+                  {{ (m.first_name || "M").charAt(0)
+                  }}{{ (m.last_name || "").charAt(0) }}
+                </div>
+                <div class="member-info">
+                  <strong>{{ m.first_name }} {{ m.last_name }}</strong>
+                  <span>{{ m.phone }}</span>
+                </div>
+                <div class="member-actions">
+                  <button
+                    class="btn-ghost"
+                    @click.prevent="$router.push(`/members/${m.id}`)"
+                  >
+                    View
+                  </button>
+                  <button class="btn-ghost secondary" @click.prevent>
+                    Msg
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="empty-state">
+              <i class="bi bi-person-plus"></i>
+              <span>No members found</span>
+            </div>
+          </article>
+        </aside>
+      </section>
+
+      <section class="transactions-full">
         <article class="dashboard-card transactions-panel">
           <div class="section-heading">
             <div>
@@ -191,8 +234,12 @@ onMounted(() => {
               <h2>Recent Transactions</h2>
             </div>
             <div class="transaction-summary">
-              <span><i class="bi bi-arrow-down-left"></i>{{ depositCount }}</span>
-              <span><i class="bi bi-arrow-up-right"></i>{{ withdrawalCount }}</span>
+              <span
+                ><i class="bi bi-arrow-down-left"></i>{{ depositCount }}</span
+              >
+              <span
+                ><i class="bi bi-arrow-up-right"></i>{{ withdrawalCount }}</span
+              >
             </div>
           </div>
 
@@ -201,20 +248,30 @@ onMounted(() => {
               <div class="transaction-main">
                 <div
                   class="transaction-icon"
-                  :class="t.transaction_type === 'deposit' ? 'deposit-icon' : 'withdrawal-icon'"
+                  :class="
+                    t.transaction_type === 'deposit'
+                      ? 'deposit-icon'
+                      : 'withdrawal-icon'
+                  "
                 >
                   <i
                     class="bi"
-                    :class="t.transaction_type === 'deposit'
-                      ? 'bi-arrow-down-left'
-                      : 'bi-arrow-up-right'"
+                    :class="
+                      t.transaction_type === 'deposit'
+                        ? 'bi-arrow-down-left'
+                        : 'bi-arrow-up-right'
+                    "
                   ></i>
                 </div>
                 <div>
                   <strong>{{ t.member_name }}</strong>
                   <span
                     class="type-badge"
-                    :class="t.transaction_type === 'deposit' ? 'deposit-badge' : 'withdrawal-badge'"
+                    :class="
+                      t.transaction_type === 'deposit'
+                        ? 'deposit-badge'
+                        : 'withdrawal-badge'
+                    "
                   >
                     {{ t.transaction_type }}
                   </span>
@@ -236,579 +293,397 @@ onMounted(() => {
 </template>
 
 <style scoped>
+:root {
+  --muted: #64748b;
+  --card-bg: linear-gradient(180deg, #ffffff, #fbfdff);
+  --accent: #2563eb;
+  --surface: #f8fbff;
+}
 .dashboard-shell {
   min-height: calc(100vh - 86px);
-  padding: clamp(0.5rem, 2vw, 1rem);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(32, 201, 151, 0.16), transparent 32rem),
-    linear-gradient(135deg, #f7faf9 0%, #eef4f6 100%);
-  color: #17212b;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #f7faf9 0%, #eef4f6 100%);
+  color: #0f172a;
 }
-
-.loading-state {
-  min-height: 58vh;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 1rem;
-  color: #52616f;
-}
-
+.loading-state,
 .error-state {
-  min-height: 58vh;
+  min-height: 56vh;
   display: grid;
   place-items: center;
-  align-content: center;
-  gap: 0.85rem;
-  color: #52616f;
-  text-align: center;
+  gap: 1rem;
+  color: var(--muted);
 }
-
-.error-state h2 {
-  margin: 0;
-  color: #17212b;
-  font-size: clamp(1.35rem, 6vw, 2rem);
-  font-weight: 850;
-}
-
-.error-state p {
-  max-width: 520px;
-  margin: 0;
-}
-
-.error-icon {
-  width: 76px;
-  height: 76px;
+.loading-mark {
+  width: 78px;
+  height: 78px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
-  background: #fff1f2;
-  color: #be123c;
-  font-size: 2rem;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(16, 24, 40, 0.08);
 }
-
 .retry-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.72rem 1rem;
-  border: 0;
-  border-radius: 8px;
+  gap: 0.5rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 10px;
   background: #0f766e;
-  color: #ffffff;
+  color: #fff;
+  border: 0;
   font-weight: 800;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
 }
 
-.retry-button:hover {
-  transform: translateY(-1px);
-  background: #115e59;
-}
-
-.loading-mark {
-  width: 76px;
-  height: 76px;
-  display: grid;
-  place-items: center;
-  border-radius: 22px;
-  background: #ffffff;
-  box-shadow: 0 18px 45px rgba(24, 54, 78, 0.12);
-}
-
-.loading-mark .spinner-border {
-  width: 2.35rem;
-  height: 2.35rem;
-  color: #0f766e;
-}
-
-.dashboard-hero {
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  gap: 1.25rem;
-  align-items: end;
-  padding: clamp(0.75rem, 2vw, 1.25rem);
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(9, 30, 39, 0.93), rgba(13, 76, 82, 0.92)),
-    url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1400&q=80");
-  background-size: cover;
-  background-position: center;
-  color: #ffffff;
-  box-shadow: 0 24px 70px rgba(17, 37, 49, 0.16);
-  animation: liftIn 0.55s ease both;
-}
-
-.dashboard-hero::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 5px;
-  background: linear-gradient(90deg, #22c55e, #14b8a6, #f59e0b);
-}
-
-.hero-copy,
-.hero-panel {
-  position: relative;
-  z-index: 1;
-}
-
-.eyebrow,
-.section-kicker {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: #5d7282;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.hero-copy .eyebrow {
-  color: #9de8d6;
-}
-
-.hero-copy h1 {
-  max-width: 760px;
-  margin: 0;
-  font-size: clamp(2rem, 7vw, 4rem);
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.hero-copy p {
-  max-width: 620px;
-  margin: 0.9rem 0 0;
-  color: rgba(255, 255, 255, 0.76);
-  font-size: 1rem;
-}
-
-.hero-panel {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-}
-
-.panel-icon {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #9de8d6;
-  font-size: 1.45rem;
-}
-
-.hero-panel span {
-  display: block;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.82rem;
-}
-
-.hero-panel strong {
-  display: block;
-  margin-top: 0.15rem;
-  color: #ffffff;
-  font-size: clamp(1.1rem, 5vw, 1.65rem);
-  line-height: 1.2;
-}
-
-.stats-grid,
-.content-grid {
+/* Stat cards */
+.stat-cards {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+  margin-bottom: 1.15rem;
 }
-
-.stats-grid {
-  margin-bottom: 1rem;
-}
-
-.stat-card,
-.dashboard-card {
-  border: 1px solid rgba(30, 56, 73, 0.08);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 18px 50px rgba(25, 48, 65, 0.08);
-}
-
 .stat-card {
   position: relative;
-  overflow: hidden;
-  min-height: 168px;
+  padding: 1.25rem;
+  border-radius: 20px;
+  background: var(--card-bg);
+  box-shadow: 0 14px 42px rgba(15, 23, 42, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14);
+}
+.stat-body .stat-kicker {
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+.stat-value {
+  font-size: 1.7rem;
+  font-weight: 900;
+  margin-top: 0.35rem;
+}
+.stat-value.large {
+  font-size: 2rem;
+  color: var(--accent);
+}
+.stat-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.4rem;
+}
+.stat-icon {
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 0.7rem;
+  border-radius: 14px;
+  color: var(--accent);
+}
+
+.visual-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+.chart-wrap {
+  min-width: 0;
+}
+.right-column {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 0.75rem;
-  animation: liftIn 0.55s ease both;
-}
-
-.stat-card:nth-child(2) {
-  animation-delay: 0.08s;
-}
-
-.stat-card:nth-child(3) {
-  animation-delay: 0.16s;
-}
-
-.stat-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 5px;
-}
-
-.members-card::before {
-  background: #2563eb;
-}
-
-.savings-card::before {
-  background: #0f9f6e;
-}
-
-.loans-card::before {
-  background: #d97706;
-}
-
-.stat-topline,
-.section-heading,
-.transaction-main {
-  display: flex;
-  align-items: center;
-}
-
-.stat-topline,
-.section-heading {
-  justify-content: space-between;
   gap: 1rem;
 }
-
-.stat-icon {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 1.25rem;
-}
-
-.members-card .stat-icon {
-  background: #2563eb;
-}
-
-.savings-card .stat-icon {
-  background: #0f9f6e;
-}
-
-.loans-card .stat-icon {
-  background: #d97706;
-}
-
-.trend-pill,
-.count-badge,
-.transaction-summary span,
-.type-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 800;
-}
-
-.trend-pill,
-.count-badge,
-.transaction-summary span {
-  padding: 0.35rem 0.65rem;
-}
-
-.trend-pill.positive {
-  color: #047857;
-  background: #dcfce7;
-}
-
-.trend-pill.attention {
-  color: #a16207;
-  background: #fef3c7;
-}
-
-.stat-card p {
-  margin: 1rem 0 0.2rem;
-  color: #64748b;
-  font-weight: 700;
-}
-
-.stat-card h2 {
-  margin: 0;
-  color: #111827;
-  font-size: clamp(1.7rem, 8vw, 2.35rem);
-  line-height: 1.05;
-  font-weight: 850;
-  word-break: break-word;
+.sticky-members {
+  position: sticky;
+  top: 92px;
 }
 
 .dashboard-card {
-  overflow: hidden;
-  padding: 0.75rem;
-  animation: liftIn 0.55s ease 0.12s both;
+  padding: 1.2rem;
+  border-radius: 18px;
+  background: var(--card-bg);
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
 }
-
 .section-heading {
-  padding-bottom: 0.65rem;
-  border-bottom: 1px solid rgba(30, 56, 73, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
-
 .section-heading h2 {
   margin: 0;
-  color: #17212b;
-  font-size: 1.08rem;
-  font-weight: 850;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+.section-kicker {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.count-badge {
-  color: #155e75;
-  background: #cffafe;
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem;
+  margin-top: 0.85rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f4f9ff);
+}
+.balance-left {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+}
+.balance-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #e6f6ff;
+  color: #0369a1;
+  font-weight: 900;
+}
+.balance-left strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.balance-left .muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.balance-amount {
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.members-search {
+  padding: 0.85rem 0 0;
+}
+.form-control {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #f9fbff;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.form-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.member-list {
+  display: grid;
+  gap: 0.72rem;
+  margin-top: 0.9rem;
+}
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f5f9ff);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.member-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+}
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: #ccfbf1;
+  color: #0f766e;
+  font-weight: 900;
+}
+.member-info strong {
+  color: #0f172a;
+  display: block;
+}
+.member-info span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.18rem;
+}
+
+.member-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.45rem;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 0.45rem 0.85rem;
+  border-radius: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.btn-ghost:hover {
+  transform: translateY(-1px);
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.16);
+}
+.btn-ghost.secondary {
+  color: #0369a1;
+  border-color: rgba(3, 105, 161, 0.16);
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 0.65rem;
+  padding: 1.2rem 1rem;
+  border-radius: 16px;
+  color: var(--muted);
+  background: rgba(37, 99, 235, 0.06);
+  margin-top: 0.85rem;
+}
+.empty-state i {
+  font-size: 1.35rem;
+  color: #2563eb;
 }
 
 .transaction-summary {
   display: flex;
-  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.transaction-summary span {
+  display: inline-flex;
+  align-items: center;
   gap: 0.45rem;
 }
-
-.transaction-summary span:first-child {
-  color: #047857;
-  background: #dcfce7;
-}
-
-.transaction-summary span:last-child {
-  color: #be123c;
-  background: #ffe4e6;
-}
-
-.member-list,
 .transaction-list {
   display: grid;
-  gap: 0.72rem;
-  padding-top: 0.65rem;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
 }
-
-.member-row,
 .transaction-row {
   display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 0.6rem;
-  border: 1px solid rgba(30, 56, 73, 0.08);
-  border-radius: 8px;
-  background: #ffffff;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.member-row:hover,
-.transaction-row:hover {
-  transform: translateY(-2px);
-  border-color: rgba(20, 184, 166, 0.35);
-  box-shadow: 0 12px 30px rgba(25, 48, 65, 0.1);
-}
-
-.avatar,
-.transaction-icon {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 8px;
-  font-weight: 850;
-}
-
-.avatar {
-  color: #0f766e;
-  background: #ccfbf1;
-  text-transform: uppercase;
-}
-
-.member-info,
-.transaction-main > div:last-child {
-  display: grid;
-  min-width: 0;
-}
-
-.member-info strong,
-.transaction-main strong {
-  overflow: hidden;
-  color: #17212b;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.member-info span {
-  overflow: hidden;
-  color: #64748b;
-  font-size: 0.88rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.member-row > i {
-  margin-left: auto;
-  color: #94a3b8;
-}
-
-.transaction-row {
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
-
+.transaction-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(16, 24, 40, 0.08);
+}
 .transaction-main {
-  min-width: 0;
-  gap: 0.75rem;
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
 }
-
+.transaction-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
 .deposit-icon {
+  background: #ecfdf5;
   color: #047857;
-  background: #dcfce7;
 }
-
 .withdrawal-icon {
+  background: #fff1f2;
   color: #be123c;
-  background: #ffe4e6;
 }
-
 .type-badge {
-  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
   margin-top: 0.32rem;
-  padding: 0.28rem 0.58rem;
   text-transform: capitalize;
 }
-
-.deposit-badge {
-  color: #047857;
-  background: #ecfdf5;
-}
-
-.withdrawal-badge {
-  color: #be123c;
-  background: #fff1f2;
-}
-
 .amount {
-  flex: 0 0 auto;
-  color: #17212b;
-  font-size: 0.94rem;
-  text-align: right;
+  font-weight: 900;
+  color: #0f172a;
 }
 
-.empty-state {
-  min-height: 170px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 0.7rem;
-  color: #64748b;
-  text-align: center;
+.chart-panel {
+  padding: 1.1rem 1.2rem 1.35rem;
+}
+.view-all {
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.view-all:hover {
+  color: #1d4ed8;
+}
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.09);
+  color: #1d4ed8;
+  font-weight: 800;
 }
 
-.empty-state i {
-  width: 58px;
-  height: 58px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #0f766e;
-  font-size: 1.6rem;
-}
-
-@keyframes liftIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.transactions-full {
+  margin-top: 1.15rem;
 }
 
 @media (min-width: 576px) {
-  .dashboard-hero {
-    min-height: 320px;
-  }
-
-  .transaction-row {
-    align-items: center;
+  .stat-cards {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
-
 @media (min-width: 768px) {
-  .dashboard-shell {
-    padding: 2rem;
+  .stat-cards {
+    grid-template-columns: repeat(4, 1fr);
   }
-
-  .stats-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .hero-panel {
-    max-width: 360px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .dashboard-hero {
-    grid-template-columns: minmax(0, 1fr) 360px;
-  }
-
-  .content-grid {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  }
-}
-
-@media (max-width: 420px) {
-  .dashboard-shell {
-    padding: 0.8rem;
-    border-radius: 16px;
-  }
-
-  .dashboard-hero,
-  .stat-card,
-  .dashboard-card {
-    border-radius: 8px;
-  }
-
-  .transaction-row {
-    display: grid;
-  }
-
-  .amount {
-    width: 100%;
-    text-align: left;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+  .visual-grid {
+    grid-template-columns: 1fr 360px;
   }
 }
 </style>

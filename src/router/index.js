@@ -3,7 +3,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth.store";
 import LoginView from "../views/auth/LoginView.vue";
 import DashboardView from "../views/dashboard/DashboardView.vue";
+import LoansView from "../views/loans/LoansView.vue";
 import MembersView from "../views/members/MembersView.vue";
+import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [
   {
@@ -24,10 +26,23 @@ const routes = [
   },
 
   {
-  path: "/members",
-  name: "Members",
-  component: MembersView,
-}
+    path: "/members",
+    name: "Members",
+    component: MembersView,
+  },
+  {
+    path: "/savings",
+    name: "Savings",
+    component: SavingsView,
+    meta: { requiresAuth: true },
+  },
+
+  {
+    path: "/loans",
+    name: "Loans",
+    component: LoansView,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

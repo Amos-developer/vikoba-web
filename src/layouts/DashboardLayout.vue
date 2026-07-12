@@ -4,15 +4,27 @@ import { useRouter } from "vue-router";
 
 import { useAuthStore } from "../stores/auth.store";
 
+const props = defineProps({
+  pageTitle: {
+    type: String,
+    default: "Dashboard",
+  },
+  pageSubtitle: {
+    type: String,
+    default: "Overview",
+  },
+});
+
 const router = useRouter();
 const authStore = useAuthStore();
 const isOpen = ref(false);
+const isCollapsed = ref(false);
 
 const navItems = [
   {
     label: "Dashboard",
     icon: "bi-speedometer2",
-    href: "/dashboard",
+    href: "/",
   },
   {
     label: "Members",
@@ -42,6 +54,11 @@ const toggleSidebar = () => {
   isOpen.value = !isOpen.value;
 };
 
+const toggleCollapse = () => {
+  // only meaningful on wide screens
+  isCollapsed.value = !isCollapsed.value;
+};
+
 const handleLogout = () => {
   authStore.logout();
   router.replace("/login");
@@ -49,7 +66,10 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="app-shell">
+  <div
+    class="app-shell"
+    :class="{ 'sidebar-open': isOpen, 'sidebar-collapsed': isCollapsed }"
+  >
     <button
       v-if="isOpen"
       class="sidebar-backdrop"
@@ -58,7 +78,10 @@ const handleLogout = () => {
       @click="closeSidebar"
     ></button>
 
-    <aside class="sidebar" :class="{ 'sidebar-open': isOpen }">
+    <aside
+      class="sidebar"
+      :class="{ 'sidebar-open': isOpen, 'sidebar-collapsed': isCollapsed }"
+    >
       <div class="sidebar-brand">
         <div class="brand-icon">
           <i class="bi bi-bank2"></i>
@@ -70,17 +93,17 @@ const handleLogout = () => {
       </div>
 
       <nav class="sidebar-nav" aria-label="Dashboard navigation">
-        <a
+        <router-link
           v-for="item in navItems"
           :key="item.label"
           class="nav-link"
-          :class="{ active: item.active }"
-          :href="item.href"
-          @click.prevent="closeSidebar"
+          :class="{ active: $route.path === item.href }"
+          :to="item.href"
+          @click="closeSidebar"
         >
           <i class="bi" :class="item.icon"></i>
           <span>{{ item.label }}</span>
-        </a>
+        </router-link>
       </nav>
 
       <div class="sidebar-summary">
@@ -102,9 +125,23 @@ const handleLogout = () => {
             <i class="bi bi-list"></i>
           </button>
 
+          <button
+            class="icon-button collapse-button"
+            type="button"
+            aria-label="Toggle sidebar"
+            @click="toggleCollapse"
+            title="Toggle sidebar"
+          >
+            <i
+              :class="
+                isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left'
+              "
+            ></i>
+          </button>
+
           <div>
-            <span class="topbar-kicker">Overview</span>
-            <h1>Dashboard</h1>
+            <span class="topbar-kicker">{{ props.pageSubtitle }}</span>
+            <h1>{{ props.pageTitle }}</h1>
           </div>
         </div>
 
@@ -134,9 +171,15 @@ const handleLogout = () => {
 <style scoped>
 .app-shell {
   min-height: 100vh;
-  display: grid;
+  height: 100vh;
+  display: block;
+  overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.16), transparent 28rem),
+    radial-gradient(
+      circle at top left,
+      rgba(20, 184, 166, 0.16),
+      transparent 28rem
+    ),
     linear-gradient(135deg, #f7faf9 0%, #edf4f7 100%);
   color: #17212b;
 }
@@ -148,25 +191,22 @@ const handleLogout = () => {
   width: min(84vw, 292px);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
   padding: 1rem;
-  background:
-    linear-gradient(145deg, rgba(8, 29, 38, 0.98), rgba(12, 76, 78, 0.96)),
-    url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80");
-  background-position: center;
-  background-size: cover;
-  color: #ffffff;
-  box-shadow: 24px 0 60px rgba(17, 37, 49, 0.24);
+  background: #fbfdff;
+  color: #0f172a;
+  border-right: 1px solid rgba(15, 23, 42, 0.04);
+  box-shadow: 8px 0 30px rgba(15, 23, 42, 0.04);
   transform: translateX(-105%);
-  transition: transform 0.28s ease;
+  transition:
+    transform 0.28s ease,
+    width 0.28s ease,
+    box-shadow 0.2s ease;
+  border-bottom-right-radius: 12px;
 }
 
 .sidebar::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 5px;
-  background: linear-gradient(90deg, #22c55e, #14b8a6, #f59e0b);
+  display: none;
 }
 
 .sidebar-open {
@@ -183,6 +223,31 @@ const handleLogout = () => {
   animation: fadeIn 0.2s ease both;
 }
 
+.sidebar.sidebar-collapsed {
+  width: 84px !important;
+}
+.sidebar-collapsed .nav-link span {
+  display: none;
+}
+.sidebar-collapsed .sidebar-brand {
+  justify-content: center;
+}
+.sidebar-collapsed .sidebar-brand strong,
+.sidebar-collapsed .sidebar-brand span,
+.sidebar-collapsed .sidebar-summary {
+  display: none;
+}
+.sidebar-collapsed .nav-link {
+  justify-content: center;
+}
+.sidebar-collapsed .nav-link i {
+  margin: 0 auto;
+}
+.collapse-button {
+  display: none;
+  margin-left: 0.5rem;
+}
+
 .sidebar-brand,
 .sidebar-nav,
 .sidebar-summary {
@@ -193,113 +258,105 @@ const handleLogout = () => {
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.45rem;
+  gap: 0.75rem;
+  padding: 0.35rem;
 }
-
-.brand-icon,
-.icon-button,
-.user-avatar {
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-}
-
 .brand-icon {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #9de8d6;
-  font-size: 1.35rem;
-  backdrop-filter: blur(12px);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #e6f0ff;
+  color: #0369a1;
+  font-size: 1.15rem;
 }
-
 .sidebar-brand strong {
   display: block;
-  font-size: 1.1rem;
-  line-height: 1.1;
+  font-size: 1.05rem;
 }
-
 .sidebar-brand span {
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--muted);
   font-size: 0.82rem;
 }
 
 .sidebar-nav {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
 }
-
 .nav-link {
-  min-height: 46px;
+  min-height: 52px;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.78);
-  font-weight: 750;
+  gap: 0.9rem;
+  padding: 0.6rem;
+  border-radius: 10px;
   text-decoration: none;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  color: var(--muted);
+  font-weight: 800;
 }
-
 .nav-link i {
-  font-size: 1.08rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #eef6ff;
+  color: #0369a1;
+  font-size: 1.05rem;
 }
-
-.nav-link:hover,
-.nav-link.active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateX(3px);
+.nav-link span {
+  flex: 1;
 }
-
+.nav-link:hover {
+  background: rgba(3, 105, 161, 0.06);
+  color: #0369a1;
+}
 .nav-link.active {
-  box-shadow: inset 4px 0 0 #22c55e;
+  background: #e8f2ff;
+  color: #0369a1;
+  box-shadow: inset 4px 0 0 #2563eb;
 }
 
 .sidebar-summary {
   margin-top: auto;
-  padding: 0.95rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
+  padding: 1rem;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
 }
-
-.sidebar-summary span,
-.topbar-kicker,
-.user-chip span {
+.sidebar-summary span {
   display: block;
-  color: #5d7282;
-  font-size: 0.74rem;
-  font-weight: 850;
-  letter-spacing: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
   text-transform: uppercase;
 }
-
-.sidebar-summary span {
-  color: #9de8d6;
-}
-
 .sidebar-summary strong {
   display: block;
-  margin-top: 0.2rem;
+  margin-top: 0.3rem;
   font-size: 0.98rem;
 }
-
 .sidebar-summary small {
   display: block;
-  margin-top: 0.2rem;
-  color: rgba(255, 255, 255, 0.68);
+  margin-top: 0.3rem;
+  color: var(--muted);
 }
 
 .main-panel {
   min-width: 0;
   display: grid;
   grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  transition: width 0.28s ease;
+}
+
+.app-shell.sidebar-collapsed .sidebar {
+  width: 84px !important;
 }
 
 .topbar {
@@ -311,9 +368,9 @@ const handleLogout = () => {
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
-  padding: 0.8rem clamp(0.8rem, 3vw, 1.35rem);
+  padding: 0.9rem clamp(0.9rem, 3vw, 1.35rem);
   border-bottom: 1px solid rgba(30, 56, 73, 0.08);
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(16px);
 }
 
@@ -327,14 +384,14 @@ const handleLogout = () => {
 
 .topbar-left {
   min-width: 0;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .topbar-left h1 {
   margin: 0;
   color: #17212b;
-  font-size: 1.35rem;
-  line-height: 1.1;
+  font-size: 1.4rem;
+  line-height: 1.05;
   font-weight: 850;
 }
 
@@ -345,8 +402,11 @@ const handleLogout = () => {
   border: 1px solid #d8e2e8;
   background: #ffffff;
   color: #0f766e;
-  font-size: 1.35rem;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1.3rem;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .icon-button:hover {
@@ -356,24 +416,27 @@ const handleLogout = () => {
 }
 
 .topbar-actions {
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 .user-chip {
   display: none;
-  gap: 0.6rem;
-  padding: 0.35rem 0.65rem 0.35rem 0.35rem;
+  gap: 0.7rem;
+  padding: 0.5rem 0.85rem;
   border: 1px solid rgba(30, 56, 73, 0.08);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #ffffff;
 }
 
 .user-avatar {
   width: 38px;
   height: 38px;
+  border-radius: 12px;
   background: #ccfbf1;
   color: #0f766e;
   font-weight: 850;
+  display: grid;
+  place-items: center;
 }
 
 .user-chip strong {
@@ -386,18 +449,22 @@ const handleLogout = () => {
 .logout-button {
   min-height: 42px;
   gap: 0.45rem;
-  padding: 0 0.85rem;
+  padding: 0 0.9rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff1f2;
   color: #be123c;
   font-weight: 850;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .logout-button:hover {
   transform: translateY(-1px);
   background: #ffe4e6;
+  box-shadow: 0 8px 18px rgba(190, 18, 60, 0.12);
 }
 
 .logout-button span {
@@ -406,8 +473,10 @@ const handleLogout = () => {
 
 .content-area {
   min-width: 0;
-  padding: clamp(0.75rem, 2vw, 1.25rem);
+  padding: clamp(0.9rem, 2vw, 1.4rem);
   animation: riseIn 0.42s ease both;
+  overflow-y: auto;
+  max-height: calc(100vh - 76px);
 }
 
 @keyframes fadeIn {
@@ -445,7 +514,12 @@ const handleLogout = () => {
 
 @media (min-width: 992px) {
   .app-shell {
-    grid-template-columns: 292px minmax(0, 1fr);
+    display: grid;
+    grid-template-columns: 292px 1fr;
+  }
+
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 84px 1fr;
   }
 
   .sidebar {
@@ -454,11 +528,23 @@ const handleLogout = () => {
     width: 292px;
     min-height: 100vh;
     transform: none;
+    border-bottom-right-radius: 0;
+  }
+
+  .sidebar.sidebar-collapsed {
+    width: 84px !important;
+  }
+
+  .main-panel {
+    width: 100%;
   }
 
   .sidebar-backdrop,
   .menu-button {
     display: none;
+  }
+  .collapse-button {
+    display: inline-flex;
   }
 
   .topbar {
@@ -468,6 +554,7 @@ const handleLogout = () => {
 
   .content-area {
     padding: 1.5rem;
+    max-height: calc(100vh - 84px);
   }
 }
 
