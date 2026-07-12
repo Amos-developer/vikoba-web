@@ -12,26 +12,22 @@ const navItems = [
   {
     label: "Dashboard",
     icon: "bi-speedometer2",
-    href: "#",
-    active: true,
+    href: "/dashboard",
   },
   {
     label: "Members",
     icon: "bi-people",
-    href: "#",
-    active: false,
+    href: "/members",
   },
   {
     label: "Savings",
     icon: "bi-wallet2",
-    href: "#",
-    active: false,
+    href: "/savings",
   },
   {
     label: "Loans",
     icon: "bi-bank2",
-    href: "#",
-    active: false,
+    href: "/loans",
   },
 ];
 
