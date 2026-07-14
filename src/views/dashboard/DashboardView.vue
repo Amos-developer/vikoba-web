@@ -345,7 +345,7 @@ const filteredMembers = computed(() => {
 }
 .stat-card {
   position: relative;
-  padding: 1.25rem;
+  padding: 1rem;
   border-radius: 20px;
   background: var(--card-bg);
   box-shadow: 0 14px 42px rgba(15, 23, 42, 0.1);
@@ -410,7 +410,7 @@ const filteredMembers = computed(() => {
 }
 
 .dashboard-card {
-  padding: 1.2rem;
+  padding: 0.95rem;
   border-radius: 18px;
   background: var(--card-bg);
   box-shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
@@ -646,7 +646,7 @@ const filteredMembers = computed(() => {
 }
 
 .chart-panel {
-  padding: 1.1rem 1.2rem 1.35rem;
+  padding: 0.95rem 1rem 1rem;
 }
 .view-all {
   color: var(--accent);

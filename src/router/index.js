@@ -29,6 +29,7 @@ const routes = [
     path: "/members",
     name: "Members",
     component: MembersView,
+    meta: { requiresAuth: true },
   },
   {
     path: "/savings",

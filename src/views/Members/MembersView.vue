@@ -1,35 +1,77 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
+import { getMembers } from "../../services/member.service.js";
 
 const search = ref("");
+const loading = ref(false);
+const members = ref([]);
 
-const members = ref([
-  {
-    id: 1,
-    first_name: "John",
-    last_name: "Mushi",
-    phone: "0712345678",
-    gender: "Male",
-    status: "Active",
-  },
-  {
-    id: 2,
-    first_name: "Amina",
-    last_name: "Said",
-    phone: "0755555555",
-    gender: "Female",
-    status: "Active",
-  },
-]);
+const stats = computed(() => {
+  const totalMembers = members.value.length;
+  const activeMembers = members.value.length;
+  const now = new Date();
+
+  const newThisMonth = members.value.filter((member) => {
+    const createdAt = member.created_at ? new Date(member.created_at) : null;
+    return (
+      createdAt &&
+      createdAt.getFullYear() === now.getFullYear() &&
+      createdAt.getMonth() === now.getMonth()
+    );
+  }).length;
+
+  return {
+    totalMembers,
+    activeMembers,
+    newThisMonth,
+  };
+});
 
 const filteredMembers = computed(() => {
-  return members.value.filter((member) =>
-    `${member.first_name} ${member.last_name}`
+  const query = search.value.trim().toLowerCase();
+
+  if (!query) {
+    return members.value;
+  }
+
+  return members.value.filter((member) => {
+    return [
+      `${member.first_name} ${member.last_name}`,
+      member.email,
+      member.phone,
+    ]
+      .filter(Boolean)
+      .join(" ")
       .toLowerCase()
-      .includes(search.value.toLowerCase()),
-  );
+      .includes(query);
+  });
 });
+
+const formatDate = (value) => {
+  if (!value) return "N/A";
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+};
+
+const loadMembers = async () => {
+  loading.value = true;
+
+  try {
+    const response = await getMembers();
+    members.value = response.data?.data || [];
+  } catch (error) {
+    console.error("Members fetch failed:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(loadMembers);
 </script>
 
 <template>
@@ -59,24 +101,26 @@ const filteredMembers = computed(() => {
       <div class="col-12 col-sm-6 col-xl-4">
         <article class="info-card p-4">
           <small class="info-card-label">Total Members</small>
-          <h3 class="info-card-value">24</h3>
+          <h3 class="info-card-value">{{ stats.totalMembers }}</h3>
           <p class="text-muted mb-0">Total registered members</p>
         </article>
       </div>
 
       <div class="col-12 col-sm-6 col-xl-4">
         <article class="info-card p-4">
-          <small class="info-card-label">Active Members</small>
-          <h3 class="info-card-value text-success">20</h3>
-          <p class="text-muted mb-0">Members with active accounts</p>
+          <small class="info-card-label">Loaded Members</small>
+          <h3 class="info-card-value text-success">
+            {{ stats.activeMembers }}
+          </h3>
+          <p class="text-muted mb-0">Members retrieved from the database</p>
         </article>
       </div>
 
       <div class="col-12 col-sm-6 col-xl-4">
         <article class="info-card p-4">
           <small class="info-card-label">New This Month</small>
-          <h3 class="info-card-value text-primary">4</h3>
-          <p class="text-muted mb-0">Members joined this month</p>
+          <h3 class="info-card-value text-primary">{{ stats.newThisMonth }}</h3>
+          <p class="text-muted mb-0">Members added in the current month</p>
         </article>
       </div>
     </section>
@@ -129,14 +173,31 @@ const filteredMembers = computed(() => {
                 <thead class="table-light">
                   <tr>
                     <th>Member</th>
+                    <th>Email</th>
                     <th>Phone</th>
-                    <th>Gender</th>
-                    <th>Status</th>
+                    <th>Joined</th>
                     <th class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="member in filteredMembers" :key="member.id">
+                  <tr v-if="loading">
+                    <td colspan="5" class="text-center py-5">
+                      <div
+                        class="d-flex justify-content-center align-items-center gap-2"
+                      >
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span>Loading members...</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-else-if="!filteredMembers.length">
+                    <td colspan="5" class="text-center py-5">
+                      No members found.
+                    </td>
+                  </tr>
+                  <tr v-else v-for="member in filteredMembers" :key="member.id">
                     <td>
                       <div class="d-flex align-items-center gap-3">
                         <div class="avatar">
@@ -152,11 +213,9 @@ const filteredMembers = computed(() => {
                         </div>
                       </div>
                     </td>
+                    <td>{{ member.email || "—" }}</td>
                     <td>{{ member.phone }}</td>
-                    <td>{{ member.gender }}</td>
-                    <td>
-                      <span class="badge bg-success">{{ member.status }}</span>
-                    </td>
+                    <td>{{ formatDate(member.created_at) }}</td>
                     <td class="text-end">
                       <button class="btn btn-sm btn-outline-primary me-2">
                         View

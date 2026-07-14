@@ -1,5 +1,50 @@
 <script setup>
+import { computed, onMounted, ref } from "vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
+import { getLoans } from "../../services/loan.service.js";
+
+const loading = ref(false);
+const loans = ref([]);
+
+const stats = computed(() => {
+  const totalLoans = loans.value.length;
+  const approvedLoans = loans.value.filter(
+    (loan) => loan.status === "approved",
+  ).length;
+  const pendingLoans = loans.value.filter(
+    (loan) => loan.status !== "approved",
+  ).length;
+
+  return {
+    totalLoans,
+    approvedLoans,
+    pendingLoans,
+  };
+});
+
+const formatCurrency = (value) => {
+  if (value == null) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "TZS",
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
+const loadLoans = async () => {
+  loading.value = true;
+
+  try {
+    const response = await getLoans();
+    loans.value = response.data?.data || [];
+  } catch (error) {
+    console.error("Loans fetch failed:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(loadLoans);
 </script>
 
 <template>
@@ -24,22 +69,24 @@ import DashboardLayout from "../../layouts/DashboardLayout.vue";
       <div class="col-12 col-sm-6 col-xl-4">
         <article class="info-card p-4">
           <small class="info-card-label">Total Loans</small>
-          <h3 class="info-card-value">52</h3>
+          <h3 class="info-card-value">{{ stats.totalLoans }}</h3>
           <p class="text-muted mb-0">Loans currently in the system</p>
         </article>
       </div>
       <div class="col-12 col-sm-6 col-xl-4">
         <article class="info-card p-4">
-          <small class="info-card-label">Active Loans</small>
-          <h3 class="info-card-value text-success">24</h3>
-          <p class="text-muted mb-0">Loans with active repayment</p>
+          <small class="info-card-label">Approved Loans</small>
+          <h3 class="info-card-value text-success">
+            {{ stats.approvedLoans }}
+          </h3>
+          <p class="text-muted mb-0">Loans with approved status</p>
         </article>
       </div>
       <div class="col-12 col-sm-6 col-xl-4">
         <article class="info-card p-4">
           <small class="info-card-label">Pending Approval</small>
-          <h3 class="info-card-value text-warning">8</h3>
-          <p class="text-muted mb-0">Loans awaiting review</p>
+          <h3 class="info-card-value text-warning">{{ stats.pendingLoans }}</h3>
+          <p class="text-muted mb-0">Loans awaiting approval</p>
         </article>
       </div>
     </section>
@@ -50,19 +97,62 @@ import DashboardLayout from "../../layouts/DashboardLayout.vue";
           class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3"
         >
           <div>
-            <h5 class="mb-2">Loan management is coming soon</h5>
+            <h5 class="mb-2">Loan records from the database</h5>
             <p class="text-muted mb-0">
-              We are building a complete loan management experience with
-              schedule tracking, borrower details, and repayment history.
+              Review live loan data for borrowers, approved balances, and
+              repayment status.
             </p>
           </div>
-          <span class="badge bg-primary py-2 px-3">Coming soon</span>
+          <span class="badge bg-info py-2 px-3">Live data</span>
         </div>
-        <div class="rounded-4 p-4 bg-light">
-          <p class="mb-0">
-            In the meantime, use the Loans section to review loan balances and
-            borrower summaries once available.
-          </p>
+
+        <div class="table-responsive">
+          <table class="table align-middle mb-0 table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Borrower</th>
+                <th>Amount</th>
+                <th>Total Payable</th>
+                <th>Remaining</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="5" class="text-center py-5">
+                  <div
+                    class="d-flex justify-content-center align-items-center gap-2"
+                  >
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span>Loading loans...</span>
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="!loans.length">
+                <td colspan="5" class="text-center py-5">
+                  No loan records found.
+                </td>
+              </tr>
+              <tr v-else v-for="loan in loans" :key="loan.id">
+                <td>{{ loan.first_name }} {{ loan.last_name }}</td>
+                <td>{{ formatCurrency(loan.amount) }}</td>
+                <td>{{ formatCurrency(loan.total_payable) }}</td>
+                <td>{{ formatCurrency(loan.remaining_balance) }}</td>
+                <td>
+                  <span
+                    :class="[
+                      'badge',
+                      loan.status === 'approved' ? 'bg-success' : 'bg-warning',
+                    ]"
+                  >
+                    {{ loan.status || "pending" }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
