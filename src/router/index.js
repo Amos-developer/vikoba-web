@@ -4,7 +4,7 @@ import { useAuthStore } from "../stores/auth.store";
 import LoginView from "../views/auth/LoginView.vue";
 import DashboardView from "../views/dashboard/DashboardView.vue";
 import LoansView from "../views/loans/LoansView.vue";
-import MembersView from "../views/members/MembersView.vue";
+import MembersView from "../views/Members/MembersView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [

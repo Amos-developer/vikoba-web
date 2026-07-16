@@ -137,7 +137,7 @@ onMounted(loadMembers);
                 <p class="text-muted mb-0">Quickly filter member records.</p>
               </div>
               <span class="badge bg-secondary align-self-start"
-                >{‌{ filteredMembers.length }} results</span
+                >{{ filteredMembers.length }} results</span
               >
             </div>
 

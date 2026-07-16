@@ -27,59 +27,65 @@ const dailyData = computed(() => {
   const map = new Map();
   days.forEach((d) => map.set(d.toDateString(), 0));
 
-  props.transactions.forEach((t) => {
-    if (!t || t.transaction_type !== "deposit") return;
-    const ts = new Date(t.created_at || t.date || t.timestamp || t.createdAt);
-    if (isNaN(ts)) return;
-    const key = ts.toDateString();
-    if (map.has(key)) map.set(key, map.get(key) + Number(t.amount || 0));
-  });
+  const demoSeries = [
+    120000, 180000, 240000, 310000, 280000, 360000, 420000, 390000, 460000,
+    520000, 470000, 610000, 590000, 670000,
+  ];
+
+  const isDevelopment = import.meta.env.DEV;
+  const shouldUseDemo =
+    isDevelopment && (!props.transactions || props.transactions.length === 0);
+
+  if (shouldUseDemo) {
+    days.forEach((day, index) => {
+      const key = day.toDateString();
+      const amount = demoSeries[index] ?? demoSeries[demoSeries.length - 1];
+      if (map.has(key)) map.set(key, amount);
+    });
+  } else {
+    props.transactions.forEach((t) => {
+      if (!t || t.transaction_type !== "deposit") return;
+      const ts = new Date(t.created_at || t.date || t.timestamp || t.createdAt);
+      if (isNaN(ts)) return;
+      const key = ts.toDateString();
+      if (map.has(key)) map.set(key, map.get(key) + Number(t.amount || 0));
+    });
+  }
 
   const labels = days.map(formatDay);
   const values = days.map((d) => map.get(d.toDateString()) || 0);
   return { labels, values };
 });
 
-const svgWidth = 800;
-const svgHeight = 260;
-const padding = { top: 18, right: 18, bottom: 36, left: 52 };
+const svgWidth = 480;
+const svgHeight = 280;
+const padding = { top: 24, right: 18, bottom: 56, left: 50 };
 
-const points = computed(() => {
-  const { values } = dailyData.value;
+const chartData = computed(() => {
+  const { labels, values } = dailyData.value;
   const innerW = svgWidth - padding.left - padding.right;
   const innerH = svgHeight - padding.top - padding.bottom;
   const max = Math.max(1, ...values);
-  return values.map((v, i) => {
-    const x = padding.left + (i / Math.max(1, values.length - 1)) * innerW;
-    const y = padding.top + innerH - (v / max) * innerH;
-    return { x, y, v };
+  const gap =
+    labels.length <= 1
+      ? 0
+      : Math.max(8, Math.min(18, innerW / labels.length / 4));
+  const barWidth =
+    labels.length <= 1
+      ? innerW
+      : (innerW - gap * (labels.length - 1)) / labels.length;
+
+  const bars = values.map((value, i) => {
+    const height = max === 0 ? 0 : (value / max) * innerH;
+    const x = padding.left + i * (barWidth + gap);
+    const y = padding.top + innerH - height;
+    return { x, y, height, width: barWidth, value, label: labels[i] };
   });
+
+  return { bars, labels, maxValue: max, innerH };
 });
 
-const pathD = computed(() => {
-  const pts = points.value;
-  if (!pts.length) return "";
-  // smooth cubic bezier via simple algorithm
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 1; i < pts.length; i++) {
-    const prev = pts[i - 1];
-    const cur = pts[i];
-    const cx = (prev.x + cur.x) / 2;
-    d += ` Q ${prev.x} ${prev.y} ${cx} ${(prev.y + cur.y) / 2}`;
-    d += ` T ${cur.x} ${cur.y}`;
-  }
-  return d;
-});
-
-const areaD = computed(() => {
-  const pts = points.value;
-  if (!pts.length) return "";
-  const last = pts[pts.length - 1];
-  const first = pts[0];
-  return `${pathD.value} L ${last.x} ${svgHeight - padding.bottom} L ${first.x} ${svgHeight - padding.bottom} Z`;
-});
-
-const maxValue = computed(() => Math.max(0, ...dailyData.value.values));
+const maxValue = computed(() => chartData.value.maxValue);
 
 function downloadSVG() {
   const svgEl = svgRef.value;
@@ -107,7 +113,6 @@ async function downloadPNG() {
   const img = new Image();
   img.onload = () => {
     const canvas = document.createElement("canvas");
-    // scale for crispness
     const scale = 2;
     canvas.width = svgWidth * scale;
     canvas.height = svgHeight * scale;
@@ -153,11 +158,9 @@ watch(
       <div class="chart-card-actions">
         <input v-model="fileName" class="chart-input" placeholder="filename" />
         <button class="btn btn-sm btn-outline-secondary" @click="downloadSVG">
-          Download SVG
+          SVG
         </button>
-        <button class="btn btn-sm btn-primary" @click="downloadPNG">
-          Download PNG
-        </button>
+        <button class="btn btn-sm btn-primary" @click="downloadPNG">PNG</button>
       </div>
     </div>
 
@@ -165,86 +168,70 @@ watch(
       <svg
         :width="svgWidth"
         :height="svgHeight"
-        viewBox="`0 0 ${svgWidth} ${svgHeight}`"
+        viewBox="0 0 480 280"
+        preserveAspectRatio="xMidYMid meet"
         ref="svgRef"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient id="gradArea" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stop-color="#6366F1" stop-opacity="0.18" />
-            <stop offset="100%" stop-color="#6366F1" stop-opacity="0.02" />
+          <linearGradient id="gradBar" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#6366F1" stop-opacity="0.95" />
+            <stop offset="100%" stop-color="#4F46E5" stop-opacity="0.78" />
           </linearGradient>
         </defs>
 
-        <!-- grid lines -->
         <g class="grid">
           <line
             :x1="padding.left"
             :x2="svgWidth - padding.right"
             :y1="padding.top"
             :y2="padding.top"
-            stroke="rgba(15,23,42,0.04)"
+            stroke="rgba(15,23,42,0.06)"
           />
           <line
             :x1="padding.left"
             :x2="svgWidth - padding.right"
-            :y1="
-              svgHeight -
-              padding.bottom -
-              (svgHeight - padding.top - padding.bottom) / 2
-            "
-            :y2="
-              svgHeight -
-              padding.bottom -
-              (svgHeight - padding.top - padding.bottom) / 2
-            "
-            stroke="rgba(15,23,42,0.04)"
+            :y1="padding.top + chartData.innerH / 2"
+            :y2="padding.top + chartData.innerH / 2"
+            stroke="rgba(15,23,42,0.05)"
+          />
+          <line
+            :x1="padding.left"
+            :x2="svgWidth - padding.right"
+            :y1="padding.top + chartData.innerH"
+            :y2="padding.top + chartData.innerH"
+            stroke="rgba(15,23,42,0.08)"
           />
         </g>
 
-        <!-- area -->
-        <path :d="areaD" fill="url(#gradArea)" stroke="none" />
-
-        <!-- line -->
-        <path
-          :d="pathD"
-          fill="none"
-          stroke="#6366F1"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-
-        <!-- points -->
-        <g>
-          <circle
-            v-for="(p, i) in points"
-            :key="i"
-            :cx="p.x"
-            :cy="p.y"
-            r="3.5"
-            fill="#fff"
-            stroke="#6366F1"
-            stroke-width="1.8"
+        <g v-if="chartData.bars.length">
+          <rect
+            v-for="(bar, index) in chartData.bars"
+            :key="index"
+            :x="bar.x"
+            :y="bar.y"
+            :width="bar.width"
+            :height="bar.height"
+            rx="8"
+            fill="url(#gradBar)"
+            opacity="0.92"
           />
         </g>
 
-        <!-- x labels -->
         <g>
           <text
-            v-for="(lab, i) in dailyData.labels"
-            :key="i"
-            :x="points[i]?.x || 0"
+            v-for="(bar, index) in chartData.bars"
+            :key="`${index}-label`"
+            :x="bar.x + bar.width / 2"
             :y="svgHeight - padding.bottom + 20"
-            font-size="11"
+            font-size="10"
             fill="#64748b"
             text-anchor="middle"
           >
-            {{ lab }}
+            {{ bar.label }}
           </text>
         </g>
 
-        <!-- y axis labels -->
         <g>
           <text
             :x="padding.left - 12"
@@ -257,7 +244,7 @@ watch(
           </text>
           <text
             :x="padding.left - 12"
-            :y="svgHeight - padding.bottom"
+            :y="padding.top + chartData.innerH"
             font-size="11"
             fill="#64748b"
             text-anchor="end"
@@ -273,21 +260,21 @@ watch(
 <style scoped>
 .chart-card {
   border: 1px solid rgba(30, 56, 73, 0.08);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
-  padding: 1rem;
-  box-shadow: 0 18px 40px rgba(25, 48, 65, 0.06);
+  padding: 0.9rem;
+  box-shadow: 0 16px 36px rgba(25, 48, 65, 0.06);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-height: 260px;
+  min-height: 240px;
 }
 
 .chart-card-header {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .chart-card-header h3 {
@@ -300,16 +287,17 @@ watch(
 .chart-card-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 0.4rem;
   align-items: center;
+  width: 100%;
 }
 
 .chart-input {
   padding: 0.35rem 0.65rem;
   border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  min-width: 140px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  min-width: 120px;
+  flex: 1 1 120px;
 }
 
 .chart-card-actions .btn,
@@ -324,28 +312,34 @@ watch(
 .chart-canvas {
   width: 100%;
   flex: 1 1 auto;
-  min-height: 180px;
+  min-height: 200px;
 }
 
 svg {
+  display: block;
   width: 100%;
   height: auto;
 }
 
-@media (max-width: 420px) {
+@media (min-width: 768px) {
   .chart-card {
-    padding: 0.75rem;
-    min-height: 200px;
+    padding: 1rem;
   }
+
   .chart-card-header {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 0.5rem;
+    justify-content: space-between;
   }
+
   .chart-card-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .chart-input {
+    min-width: 140px;
+    flex: 0 0 140px;
   }
 }
 </style>
