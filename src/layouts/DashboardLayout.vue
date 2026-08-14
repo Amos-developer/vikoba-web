@@ -75,7 +75,6 @@ const handleLogout = () => {
           <div class="top-actions">
             <span class="refresh-note">Auto-refreshing</span>
             <button type="button" @click="$router.go(0)"><i class="bi bi-arrow-repeat"></i><span>Refresh</span></button>
-            <button class="primary-action" type="button" @click="$router.push('/members')"><i class="bi bi-person-plus"></i><span>Member</span></button>
           </div>
         </header>
         <main><slot /></main>

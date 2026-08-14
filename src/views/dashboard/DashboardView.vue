@@ -1,6 +1,5 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import ChartCard from "../../components/ChartCard.vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
 import {
   getDashboardStats,
@@ -127,14 +126,6 @@ onMounted(fetchDashboard);
         </section>
 
         <section class="content-grid">
-          <article class="section-card chart-panel">
-            <div class="section-bar">
-              <div><span class="eyebrow">Savings activity</span><h2>Deposit overview</h2></div>
-              <span class="period">Last 14 days</span>
-            </div>
-            <ChartCard :transactions="transactions" :days="14" />
-          </article>
-
           <article class="section-card members-panel">
             <div class="section-bar">
               <div><span class="eyebrow">Directory</span><h2>Recent members</h2></div>
@@ -185,6 +176,8 @@ onMounted(fetchDashboard);
 .dashboard{display:grid;gap:1rem;color:#18181b}.section-card{min-width:0;background:#fff;border:1px solid #ececf1;border-radius:14px;box-shadow:0 1px 2px rgba(24,24,27,.03)}.section-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;border-bottom:1px solid #f0f0f3}.section-bar h2{margin:.1rem 0 0;font-size:1rem;line-height:1.2;font-weight:700}.eyebrow{display:block;color:#8a8993;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}.updated,.period,.number-badge{display:inline-flex;align-items:center;gap:.35rem;color:#777680;font-size:.74rem}.number-badge{justify-content:center;min-width:1.8rem;height:1.8rem;border-radius:8px;background:#f0edff;color:#7157e8;font-weight:700}.stats-grid{display:grid;grid-template-columns:1fr;gap:.75rem;padding:.75rem}.stat-card{padding:1rem;border:1px solid #ededf2;border-radius:11px;background:linear-gradient(145deg,#fff,#fdfdff)}.stat-label{display:flex;align-items:center;gap:.5rem;color:#777680;font-size:.78rem}.stat-icon{width:1.75rem;height:1.75rem;display:grid;place-items:center;border-radius:7px;background:#f0edff;color:#7559e8}.stat-icon.green{background:#eaf9f1;color:#159a61}.stat-icon.blue{background:#eaf4ff;color:#3585dc}.stat-icon.amber{background:#fff5dd;color:#c78614}.stat-card>strong{display:block;margin:.85rem 0 .35rem;font-size:1.25rem;white-space:nowrap}.stat-note{display:flex;align-items:center;gap:.25rem;color:#85848d;font-size:.69rem}.stat-note i{color:#159a61}.content-grid{display:grid;gap:1rem}.chart-panel,.members-panel{overflow:hidden}.chart-panel :deep(.chart-card){border:0;border-radius:0;box-shadow:none}.chart-panel :deep(.chart-card-header){display:none}.members-panel{display:flex;flex-direction:column}.search-box{display:flex;align-items:center;gap:.5rem;margin:.75rem;padding:.6rem .7rem;border:1px solid #e6e5eb;border-radius:8px;color:#9998a1}.search-box:focus-within{border-color:#8068ec;box-shadow:0 0 0 3px #eeeaff}.search-box input{width:100%;border:0;outline:0;font-size:.78rem;background:transparent}.member-list{padding:0 .75rem .75rem}.member-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.65rem;padding:.65rem 0;border-bottom:1px solid #f1f1f4}.member-row:last-child{border:0}.avatar,.mini-avatar{display:grid;place-items:center;border-radius:50%;background:#eeeaff;color:#6f57d9;font-weight:700}.avatar{width:2.1rem;height:2.1rem;font-size:.72rem}.mini-avatar{width:1.65rem;height:1.65rem;font-size:.65rem}.member-name{min-width:0}.member-name strong,.member-name span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.member-name strong{font-size:.78rem}.member-name span{margin-top:.12rem;color:#919099;font-size:.68rem}.member-row button,.more-button{border:0;background:transparent;color:#9998a1}.transactions-panel{overflow:hidden}.transaction-heading{align-items:flex-end}.flow-summary{display:none;gap:.75rem;font-size:.7rem;color:#777680}.flow-summary span{display:flex;gap:.25rem}.flow-summary span:first-child i{color:#16975f}.flow-summary span:last-child i{color:#df4f5b}.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}table{width:100%;min-width:650px;border-collapse:collapse;font-size:.76rem}th{padding:.65rem 1rem;color:#92919a;background:#fafafa;text-align:left;font-size:.68rem;font-weight:500}td{padding:.72rem 1rem;border-top:1px solid #f0f0f3;color:#686770}.table-member{display:flex;align-items:center;gap:.55rem;color:#242328}.status-pill{display:inline-flex;padding:.28rem .55rem;border-radius:999px;text-transform:capitalize;font-size:.67rem}.status-pill.deposit{background:#eaf9f1;color:#168657}.status-pill.withdrawal{background:#fff0f1;color:#d84d5a}.amount-cell{text-align:right;color:#26252b}.more-button{padding:.25rem}.empty-row{padding:2rem;text-align:center;color:#919099;font-size:.8rem}.state-panel{min-height:45vh;display:flex;align-items:center;justify-content:center;gap:.7rem;background:#fff;border:1px solid #ececf1;border-radius:14px;color:#777680}.error-panel{flex-wrap:wrap;padding:2rem}.error-panel div span,.error-panel div strong{display:block}.error-panel button{border:0;border-radius:8px;padding:.55rem .8rem;background:#7559e8;color:#fff}
 @media (min-width:560px){.stats-grid{grid-template-columns:repeat(2,1fr)}.flow-summary{display:flex}}
 @media (min-width:900px){.stats-grid{grid-template-columns:repeat(4,1fr)}.content-grid{grid-template-columns:minmax(0,1.65fr) minmax(270px,.65fr)}.chart-panel{min-height:390px}}
+
+/* Cash flow replaces the removed deposit chart in the dashboard's primary column. */
+.stats-section{order:1}.content-grid{display:contents}.transactions-panel{order:2}.members-panel{order:3}
+@media (min-width:900px){.dashboard{grid-template-columns:minmax(0,1.65fr) minmax(270px,.65fr)}.stats-section{grid-column:1/-1}.transactions-panel{grid-column:1}.members-panel{grid-column:2}}
 </style>
-
-
