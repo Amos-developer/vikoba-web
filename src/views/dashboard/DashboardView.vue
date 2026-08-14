@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from "vue";
 import ChartCard from "../../components/ChartCard.vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
-
 import {
   getDashboardStats,
   getRecentMembers,
@@ -11,13 +10,8 @@ import {
 
 const loading = ref(true);
 const errorMessage = ref("");
-
-const stats = ref({
-  totalMembers: 0,
-  totalSavings: 0,
-  activeLoans: 0,
-});
-
+const search = ref("");
+const stats = ref({ totalMembers: 0, totalSavings: 0, activeLoans: 0 });
 const members = ref([]);
 const transactions = ref([]);
 
@@ -30,660 +24,167 @@ const unwrapArray = (response) => {
   return Array.isArray(value) ? value : [];
 };
 
+const isDeposit = (transaction) =>
+  ["deposit", "saving"].includes(transaction.transaction_type);
 const depositCount = computed(
-  () =>
-    transactions.value.filter(
-      (transaction) => transaction.transaction_type === "deposit",
-    ).length,
+  () => transactions.value.filter(isDeposit).length,
 );
-
 const withdrawalCount = computed(
-  () =>
-    transactions.value.filter(
-      (transaction) => transaction.transaction_type !== "deposit",
-    ).length,
+  () => transactions.value.length - depositCount.value,
 );
+const filteredMembers = computed(() => {
+  const query = search.value.toLowerCase().trim();
+  if (!query) return members.value;
+  return members.value.filter((member) =>
+    `${member.first_name || ""} ${member.last_name || ""} ${member.phone || ""}`
+      .toLowerCase()
+      .includes(query),
+  );
+});
+
+const statCards = computed(() => [
+  {
+    label: "Total members",
+    value: formatNumber(stats.value.totalMembers),
+    note: `${members.value.length} recently joined`,
+    icon: "bi-people",
+    tone: "purple",
+  },
+  {
+    label: "Total deposits",
+    value: formatCurrency(stats.value.totalSavings),
+    note: `${depositCount.value} recent deposits`,
+    icon: "bi-arrow-down-left",
+    tone: "green",
+  },
+  {
+    label: "Total savings",
+    value: formatCurrency(stats.value.totalSavings),
+    note: "Current saved amount",
+    icon: "bi-wallet2",
+    tone: "blue",
+  },
+  {
+    label: "Active loans",
+    value: formatNumber(stats.value.activeLoans),
+    note: "Open loan accounts",
+    icon: "bi-bank",
+    tone: "amber",
+  },
+]);
 
 const fetchDashboard = async () => {
   try {
     loading.value = true;
     errorMessage.value = "";
-
-    const [statsRes, membersRes, transactionsRes] = await Promise.all([
-      getDashboardStats(),
-      getRecentMembers(),
-      getRecentTransactions(),
-    ]);
-
-    stats.value = unwrapData(statsRes, {
-      totalMembers: 0,
-      totalSavings: 0,
-      activeLoans: 0,
-    });
-
-    members.value = unwrapArray(membersRes);
-
-    transactions.value = unwrapArray(transactionsRes);
+    const [statsResponse, membersResponse, transactionsResponse] =
+      await Promise.all([
+        getDashboardStats(),
+        getRecentMembers(),
+        getRecentTransactions(),
+      ]);
+    stats.value = unwrapData(statsResponse, stats.value);
+    members.value = unwrapArray(membersResponse);
+    transactions.value = unwrapArray(transactionsResponse);
   } catch (error) {
-    console.error("Dashboard Error:", error);
     errorMessage.value =
-      error.response?.data?.message ||
-      error.message ||
-      "Unable to load dashboard data.";
+      error.response?.data?.message || error.message || "Unable to load dashboard data.";
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(() => {
-  fetchDashboard();
-});
-
-// local reactive used for filtering UI only
-const search = ref("");
-const filteredMembers = computed(() => {
-  const q = (search.value || "").toLowerCase().trim();
-  if (!q) return members.value;
-  return members.value.filter((m) => {
-    const name = `${m.first_name || ""} ${m.last_name || ""}`.toLowerCase();
-    return name.includes(q) || (m.phone || "").includes(q);
-  });
-});
+onMounted(fetchDashboard);
 </script>
 
 <template>
-  <DashboardLayout>
-    <div v-if="loading" class="dashboard-shell">
-      <div class="loading-state">
-        <div class="loading-mark">
-          <span class="spinner-border"></span>
-        </div>
-        <p>Loading dashboard...</p>
+  <DashboardLayout page-title="Dashboard" page-subtitle="Workspace overview">
+    <div class="dashboard">
+      <div v-if="loading" class="state-panel">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>Loading your workspace...</span>
       </div>
-    </div>
 
-    <div v-else-if="errorMessage" class="dashboard-shell">
-      <div class="error-state">
-        <div class="error-icon">
-          <i class="bi bi-exclamation-triangle"></i>
-        </div>
-        <h2>Dashboard data failed to load</h2>
-        <p>{{ errorMessage }}</p>
-        <button class="retry-button" type="button" @click="fetchDashboard">
-          <i class="bi bi-arrow-clockwise"></i>
-          Retry
-        </button>
+      <div v-else-if="errorMessage" class="state-panel error-panel">
+        <i class="bi bi-exclamation-circle"></i>
+        <div><strong>Dashboard unavailable</strong><span>{{ errorMessage }}</span></div>
+        <button type="button" @click="fetchDashboard">Try again</button>
       </div>
-    </div>
 
-    <div v-else class="dashboard-shell">
-      <!-- Hero stat cards -->
-      <section class="stat-cards" aria-label="Top statistics">
-        <div class="stat-card">
-          <div class="stat-body">
-            <small class="stat-kicker">Total Users</small>
-            <div class="stat-value">{{ formatNumber(stats.totalMembers) }}</div>
-            <div class="stat-sub">{{ members.length }} joined recently</div>
+      <template v-else>
+        <section class="section-card stats-section" aria-labelledby="quick-stats">
+          <div class="section-bar">
+            <div><span class="eyebrow">At a glance</span><h2 id="quick-stats">Quick stats</h2></div>
+            <span class="updated"><i class="bi bi-arrow-repeat"></i> Live data</span>
           </div>
-          <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-        </div>
+          <div class="stats-grid">
+            <article v-for="card in statCards" :key="card.label" class="stat-card">
+              <div class="stat-label"><span class="stat-icon" :class="card.tone"><i class="bi" :class="card.icon"></i></span>{{ card.label }}</div>
+              <strong>{{ card.value }}</strong>
+              <span class="stat-note"><i class="bi bi-arrow-up-right"></i>{{ card.note }}</span>
+            </article>
+          </div>
+        </section>
 
-        <div class="stat-card">
-          <div class="stat-body">
-            <small class="stat-kicker">Total Deposit</small>
-            <div class="stat-value large">
-              {{ formatNumber(stats.totalSavings) }} TZS
+        <section class="content-grid">
+          <article class="section-card chart-panel">
+            <div class="section-bar">
+              <div><span class="eyebrow">Savings activity</span><h2>Deposit overview</h2></div>
+              <span class="period">Last 14 days</span>
             </div>
-            <div class="stat-sub">{{ depositCount }} deposits</div>
-          </div>
-          <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-body">
-            <small class="stat-kicker">Total Savings</small>
-            <div class="stat-value large">
-              {{ formatNumber(stats.totalSavings) }} TZS
-            </div>
-            <div class="stat-sub">Total saved amount</div>
-          </div>
-          <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-body">
-            <small class="stat-kicker">Total Loans</small>
-            <div class="stat-value">{{ formatNumber(stats.activeLoans) }}</div>
-            <div class="stat-sub">Active loan accounts</div>
-          </div>
-          <div class="stat-icon"><i class="bi bi-bank2"></i></div>
-        </div>
-      </section>
-
-      <!-- Chart + Right column layout -->
-      <section class="visual-grid">
-        <div class="chart-wrap">
-          <article class="dashboard-card chart-panel">
-            <div class="section-heading">
-              <div>
-                <span class="section-kicker">Deposit Volume</span>
-                <h2>Credited deposits during the last 14 days</h2>
-              </div>
-              <a class="view-all" href="#">View All</a>
-            </div>
-
             <ChartCard :transactions="transactions" :days="14" />
           </article>
-        </div>
 
-        <aside class="right-column">
-          <article class="dashboard-card members-panel sticky-members">
-            <div class="section-heading">
-              <div>
-                <span class="section-kicker">Recent Accounts</span>
-                <h2>Recent Members</h2>
-              </div>
-              <span class="count-badge">{{ members.length }}</span>
+          <article class="section-card members-panel">
+            <div class="section-bar">
+              <div><span class="eyebrow">Directory</span><h2>Recent members</h2></div>
+              <span class="number-badge">{{ members.length }}</span>
             </div>
-
-            <div class="members-search">
-              <input
-                v-model="search"
-                class="form-control"
-                placeholder="Search members..."
-              />
-            </div>
-
+            <label class="search-box">
+              <i class="bi bi-search"></i>
+              <input v-model="search" type="search" placeholder="Search members" />
+            </label>
             <div v-if="filteredMembers.length" class="member-list">
-              <div v-for="m in filteredMembers" :key="m.id" class="member-row">
-                <div class="avatar">
-                  {{ (m.first_name || "M").charAt(0)
-                  }}{{ (m.last_name || "").charAt(0) }}
-                </div>
-                <div class="member-info">
-                  <strong>{{ m.first_name }} {{ m.last_name }}</strong>
-                  <span>{{ m.phone }}</span>
-                </div>
-                <div class="member-actions">
-                  <button
-                    class="btn-ghost"
-                    @click.prevent="$router.push(`/members/${m.id}`)"
-                  >
-                    View
-                  </button>
-                  <button class="btn-ghost secondary" @click.prevent>
-                    Msg
-                  </button>
-                </div>
+              <div v-for="member in filteredMembers" :key="member.id" class="member-row">
+                <span class="avatar">{{ (member.first_name || "M")[0] }}{{ (member.last_name || "")[0] }}</span>
+                <div class="member-name"><strong>{{ member.first_name }} {{ member.last_name }}</strong><span>{{ member.phone || "No phone" }}</span></div>
+                <button type="button" aria-label="View member" @click="$router.push(`/members/${member.id}`)"><i class="bi bi-chevron-right"></i></button>
               </div>
             </div>
-
-            <div v-else class="empty-state">
-              <i class="bi bi-person-plus"></i>
-              <span>No members found</span>
-            </div>
+            <div v-else class="empty-row">No members found.</div>
           </article>
-        </aside>
-      </section>
+        </section>
 
-      <section class="transactions-full">
-        <article class="dashboard-card transactions-panel">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">Cash flow</span>
-              <h2>Recent Transactions</h2>
-            </div>
-            <div class="transaction-summary">
-              <span
-                ><i class="bi bi-arrow-down-left"></i>{{ depositCount }}</span
-              >
-              <span
-                ><i class="bi bi-arrow-up-right"></i>{{ withdrawalCount }}</span
-              >
-            </div>
+        <section class="section-card transactions-panel">
+          <div class="section-bar transaction-heading">
+            <div><span class="eyebrow">Cash flow</span><h2>Recent transactions</h2></div>
+            <div class="flow-summary"><span><i class="bi bi-arrow-down-left"></i>{{ depositCount }} in</span><span><i class="bi bi-arrow-up-right"></i>{{ withdrawalCount }} out</span></div>
           </div>
-
-          <div v-if="transactions.length" class="transaction-list">
-            <div v-for="t in transactions" :key="t.id" class="transaction-row">
-              <div class="transaction-main">
-                <div
-                  class="transaction-icon"
-                  :class="
-                    t.transaction_type === 'deposit'
-                      ? 'deposit-icon'
-                      : 'withdrawal-icon'
-                  "
-                >
-                  <i
-                    class="bi"
-                    :class="
-                      t.transaction_type === 'deposit'
-                        ? 'bi-arrow-down-left'
-                        : 'bi-arrow-up-right'
-                    "
-                  ></i>
-                </div>
-                <div>
-                  <strong>{{ t.member_name }}</strong>
-                  <span
-                    class="type-badge"
-                    :class="
-                      t.transaction_type === 'deposit'
-                        ? 'deposit-badge'
-                        : 'withdrawal-badge'
-                    "
-                  >
-                    {{ t.transaction_type }}
-                  </span>
-                </div>
-              </div>
-
-              <strong class="amount">{{ formatCurrency(t.amount) }}</strong>
-            </div>
+          <div v-if="transactions.length" class="table-scroll">
+            <table>
+              <thead><tr><th>Member</th><th>Type</th><th>Date</th><th class="amount-cell">Amount</th><th aria-label="Actions"></th></tr></thead>
+              <tbody>
+                <tr v-for="transaction in transactions" :key="transaction.id">
+                  <td><div class="table-member"><span class="mini-avatar">{{ (transaction.member_name || "M")[0] }}</span><strong>{{ transaction.member_name || "Member" }}</strong></div></td>
+                  <td><span class="status-pill" :class="isDeposit(transaction) ? 'deposit' : 'withdrawal'">{{ transaction.transaction_type }}</span></td>
+                  <td>{{ transaction.created_at ? new Date(transaction.created_at).toLocaleDateString() : "â€”" }}</td>
+                  <td class="amount-cell"><strong>{{ formatCurrency(transaction.amount) }}</strong></td>
+                  <td><button class="more-button" type="button" aria-label="Transaction options"><i class="bi bi-three-dots"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-
-          <div v-else class="empty-state">
-            <i class="bi bi-receipt"></i>
-            <span>No transactions found</span>
-          </div>
-        </article>
-      </section>
+          <div v-else class="empty-row">No recent transactions.</div>
+        </section>
+      </template>
     </div>
   </DashboardLayout>
 </template>
 
 <style scoped>
-:root {
-  --muted: #64748b;
-  --card-bg: linear-gradient(180deg, #ffffff, #fbfdff);
-  --accent: #2563eb;
-  --surface: #f8fbff;
-}
-.dashboard-shell {
-  min-height: calc(100vh - 86px);
-  padding: clamp(0.75rem, 2vw, 1.5rem);
-  border-radius: 22px;
-  background: linear-gradient(135deg, #f7faf9 0%, #eef4f6 100%);
-  color: #0f172a;
-}
-.loading-state,
-.error-state {
-  min-height: 56vh;
-  display: grid;
-  place-items: center;
-  gap: 1rem;
-  color: var(--muted);
-}
-.loading-mark {
-  width: 78px;
-  height: 78px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 18px 42px rgba(16, 24, 40, 0.08);
-}
-.retry-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.1rem;
-  border-radius: 10px;
-  background: #0f766e;
-  color: #fff;
-  border: 0;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-/* Stat cards */
-.stat-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  margin-bottom: 1.15rem;
-}
-.stat-card {
-  position: relative;
-  padding: 1rem;
-  border-radius: 20px;
-  background: var(--card-bg);
-  box-shadow: 0 14px 42px rgba(15, 23, 42, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition:
-    transform 0.22s ease,
-    box-shadow 0.22s ease;
-}
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14);
-}
-.stat-body .stat-kicker {
-  color: var(--muted);
-  font-weight: 800;
-  font-size: 0.82rem;
-}
-.stat-value {
-  font-size: 1.7rem;
-  font-weight: 900;
-  margin-top: 0.35rem;
-}
-.stat-value.large {
-  font-size: 2rem;
-  color: var(--accent);
-}
-.stat-sub {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-top: 0.4rem;
-}
-.stat-icon {
-  position: absolute;
-  right: 18px;
-  top: 16px;
-  background: rgba(37, 99, 235, 0.08);
-  padding: 0.7rem;
-  border-radius: 14px;
-  color: var(--accent);
-}
-
-.visual-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  align-items: start;
-  margin-bottom: 1rem;
-}
-.chart-wrap {
-  min-width: 0;
-}
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.sticky-members {
-  position: sticky;
-  top: 92px;
-}
-
-.dashboard-card {
-  padding: 0.95rem;
-  border-radius: 18px;
-  background: var(--card-bg);
-  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
-}
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-}
-.section-heading h2 {
-  margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
-.section-kicker {
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.balance-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.1rem;
-  margin-top: 0.85rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff, #f4f9ff);
-}
-.balance-left {
-  display: flex;
-  gap: 0.9rem;
-  align-items: center;
-}
-.balance-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  background: #e6f6ff;
-  color: #0369a1;
-  font-weight: 900;
-}
-.balance-left strong {
-  display: block;
-  margin-bottom: 0.2rem;
-}
-.balance-left .muted {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-.balance-amount {
-  font-weight: 900;
-  color: #0f172a;
-}
-
-.members-search {
-  padding: 0.85rem 0 0;
-}
-.form-control {
-  width: 100%;
-  min-height: 46px;
-  padding: 0.95rem 1rem;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  font-size: 0.95rem;
-  color: #0f172a;
-  background: #f9fbff;
-  outline: none;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.form-control:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-}
-
-.member-list {
-  display: grid;
-  gap: 0.72rem;
-  margin-top: 0.9rem;
-}
-.member-row {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.95rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff, #f5f9ff);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-.member-row:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
-}
-.avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  background: #ccfbf1;
-  color: #0f766e;
-  font-weight: 900;
-}
-.member-info strong {
-  color: #0f172a;
-  display: block;
-}
-.member-info span {
-  display: block;
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-top: 0.18rem;
-}
-
-.member-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 0.45rem;
-}
-.btn-ghost {
-  background: transparent;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  padding: 0.45rem 0.85rem;
-  border-radius: 12px;
-  font-weight: 800;
-  color: #0f172a;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-.btn-ghost:hover {
-  transform: translateY(-1px);
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.16);
-}
-.btn-ghost.secondary {
-  color: #0369a1;
-  border-color: rgba(3, 105, 161, 0.16);
-}
-
-.empty-state {
-  display: grid;
-  place-items: center;
-  text-align: center;
-  gap: 0.65rem;
-  padding: 1.2rem 1rem;
-  border-radius: 16px;
-  color: var(--muted);
-  background: rgba(37, 99, 235, 0.06);
-  margin-top: 0.85rem;
-}
-.empty-state i {
-  font-size: 1.35rem;
-  color: #2563eb;
-}
-
-.transaction-summary {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-.transaction-summary span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-.transaction-list {
-  display: grid;
-  gap: 0.8rem;
-  margin-top: 0.85rem;
-}
-.transaction-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff, #f7fbff);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-.transaction-row:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(16, 24, 40, 0.08);
-}
-.transaction-main {
-  display: flex;
-  gap: 0.85rem;
-  align-items: center;
-}
-.transaction-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
-}
-.deposit-icon {
-  background: #ecfdf5;
-  color: #047857;
-}
-.withdrawal-icon {
-  background: #fff1f2;
-  color: #be123c;
-}
-.type-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.78rem;
-  padding: 0.28rem 0.65rem;
-  border-radius: 999px;
-  margin-top: 0.32rem;
-  text-transform: capitalize;
-}
-.amount {
-  font-weight: 900;
-  color: #0f172a;
-}
-
-.chart-panel {
-  padding: 0.95rem 1rem 1rem;
-}
-.view-all {
-  color: var(--accent);
-  font-weight: 800;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-.view-all:hover {
-  color: #1d4ed8;
-}
-.count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.09);
-  color: #1d4ed8;
-  font-weight: 800;
-}
-
-.transactions-full {
-  margin-top: 1.15rem;
-}
-
-@media (min-width: 576px) {
-  .stat-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (min-width: 768px) {
-  .stat-cards {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .visual-grid {
-    grid-template-columns: 1fr 360px;
-  }
-}
+.dashboard{display:grid;gap:1rem;color:#18181b}.section-card{min-width:0;background:#fff;border:1px solid #ececf1;border-radius:14px;box-shadow:0 1px 2px rgba(24,24,27,.03)}.section-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;border-bottom:1px solid #f0f0f3}.section-bar h2{margin:.1rem 0 0;font-size:1rem;line-height:1.2;font-weight:700}.eyebrow{display:block;color:#8a8993;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}.updated,.period,.number-badge{display:inline-flex;align-items:center;gap:.35rem;color:#777680;font-size:.74rem}.number-badge{justify-content:center;min-width:1.8rem;height:1.8rem;border-radius:8px;background:#f0edff;color:#7157e8;font-weight:700}.stats-grid{display:grid;grid-template-columns:1fr;gap:.75rem;padding:.75rem}.stat-card{padding:1rem;border:1px solid #ededf2;border-radius:11px;background:linear-gradient(145deg,#fff,#fdfdff)}.stat-label{display:flex;align-items:center;gap:.5rem;color:#777680;font-size:.78rem}.stat-icon{width:1.75rem;height:1.75rem;display:grid;place-items:center;border-radius:7px;background:#f0edff;color:#7559e8}.stat-icon.green{background:#eaf9f1;color:#159a61}.stat-icon.blue{background:#eaf4ff;color:#3585dc}.stat-icon.amber{background:#fff5dd;color:#c78614}.stat-card>strong{display:block;margin:.85rem 0 .35rem;font-size:1.25rem;white-space:nowrap}.stat-note{display:flex;align-items:center;gap:.25rem;color:#85848d;font-size:.69rem}.stat-note i{color:#159a61}.content-grid{display:grid;gap:1rem}.chart-panel,.members-panel{overflow:hidden}.chart-panel :deep(.chart-card){border:0;border-radius:0;box-shadow:none}.chart-panel :deep(.chart-card-header){display:none}.members-panel{display:flex;flex-direction:column}.search-box{display:flex;align-items:center;gap:.5rem;margin:.75rem;padding:.6rem .7rem;border:1px solid #e6e5eb;border-radius:8px;color:#9998a1}.search-box:focus-within{border-color:#8068ec;box-shadow:0 0 0 3px #eeeaff}.search-box input{width:100%;border:0;outline:0;font-size:.78rem;background:transparent}.member-list{padding:0 .75rem .75rem}.member-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:.65rem;padding:.65rem 0;border-bottom:1px solid #f1f1f4}.member-row:last-child{border:0}.avatar,.mini-avatar{display:grid;place-items:center;border-radius:50%;background:#eeeaff;color:#6f57d9;font-weight:700}.avatar{width:2.1rem;height:2.1rem;font-size:.72rem}.mini-avatar{width:1.65rem;height:1.65rem;font-size:.65rem}.member-name{min-width:0}.member-name strong,.member-name span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.member-name strong{font-size:.78rem}.member-name span{margin-top:.12rem;color:#919099;font-size:.68rem}.member-row button,.more-button{border:0;background:transparent;color:#9998a1}.transactions-panel{overflow:hidden}.transaction-heading{align-items:flex-end}.flow-summary{display:none;gap:.75rem;font-size:.7rem;color:#777680}.flow-summary span{display:flex;gap:.25rem}.flow-summary span:first-child i{color:#16975f}.flow-summary span:last-child i{color:#df4f5b}.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}table{width:100%;min-width:650px;border-collapse:collapse;font-size:.76rem}th{padding:.65rem 1rem;color:#92919a;background:#fafafa;text-align:left;font-size:.68rem;font-weight:500}td{padding:.72rem 1rem;border-top:1px solid #f0f0f3;color:#686770}.table-member{display:flex;align-items:center;gap:.55rem;color:#242328}.status-pill{display:inline-flex;padding:.28rem .55rem;border-radius:999px;text-transform:capitalize;font-size:.67rem}.status-pill.deposit{background:#eaf9f1;color:#168657}.status-pill.withdrawal{background:#fff0f1;color:#d84d5a}.amount-cell{text-align:right;color:#26252b}.more-button{padding:.25rem}.empty-row{padding:2rem;text-align:center;color:#919099;font-size:.8rem}.state-panel{min-height:45vh;display:flex;align-items:center;justify-content:center;gap:.7rem;background:#fff;border:1px solid #ececf1;border-radius:14px;color:#777680}.error-panel{flex-wrap:wrap;padding:2rem}.error-panel div span,.error-panel div strong{display:block}.error-panel button{border:0;border-radius:8px;padding:.55rem .8rem;background:#7559e8;color:#fff}
+@media (min-width:560px){.stats-grid{grid-template-columns:repeat(2,1fr)}.flow-summary{display:flex}}
+@media (min-width:900px){.stats-grid{grid-template-columns:repeat(4,1fr)}.content-grid{grid-template-columns:minmax(0,1.65fr) minmax(270px,.65fr)}.chart-panel{min-height:390px}}
 </style>
+
+

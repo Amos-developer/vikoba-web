@@ -1,64 +1,26 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-
 import { useAuthStore } from "../stores/auth.store";
 
-const props = defineProps({
-  pageTitle: {
-    type: String,
-    default: "Dashboard",
-  },
-  pageSubtitle: {
-    type: String,
-    default: "Overview",
-  },
+defineProps({
+  pageTitle: { type: String, default: "Dashboard" },
+  pageSubtitle: { type: String, default: "Overview" },
 });
 
 const router = useRouter();
 const authStore = useAuthStore();
 const isOpen = ref(false);
 const isCollapsed = ref(false);
-
 const navItems = [
-  {
-    label: "Dashboard",
-    icon: "bi-speedometer2",
-    href: "/",
-  },
-  {
-    label: "Members",
-    icon: "bi-people",
-    href: "/members",
-  },
-  {
-    label: "Savings",
-    icon: "bi-wallet2",
-    href: "/savings",
-  },
-  {
-    label: "Loans",
-    icon: "bi-bank2",
-    href: "/loans",
-  },
+  { label: "Dashboard", icon: "bi-grid", href: "/" },
+  { label: "Members", icon: "bi-people", href: "/members" },
+  { label: "Savings", icon: "bi-wallet2", href: "/savings" },
+  { label: "Loans", icon: "bi-bank", href: "/loans" },
 ];
-
 const userRole = computed(() => authStore.user?.role || "Admin");
 const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());
-
-const closeSidebar = () => {
-  isOpen.value = false;
-};
-
-const toggleSidebar = () => {
-  isOpen.value = !isOpen.value;
-};
-
-const toggleCollapse = () => {
-  // only meaningful on wide screens
-  isCollapsed.value = !isCollapsed.value;
-};
-
+const closeSidebar = () => (isOpen.value = false);
 const handleLogout = () => {
   authStore.logout();
   router.replace("/login");
@@ -66,522 +28,54 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div
-    class="app-shell"
-    :class="{ 'sidebar-open': isOpen, 'sidebar-collapsed': isCollapsed }"
-  >
-    <button
-      v-if="isOpen"
-      class="sidebar-backdrop"
-      type="button"
-      aria-label="Close navigation"
-      @click="closeSidebar"
-    ></button>
-
-    <aside
-      class="sidebar"
-      :class="{ 'sidebar-open': isOpen, 'sidebar-collapsed': isCollapsed }"
-    >
-      <div class="sidebar-brand">
-        <div class="brand-icon">
-          <i class="bi bi-bank2"></i>
+  <div class="viewport-frame">
+    <div class="app-shell" :class="{ collapsed: isCollapsed }">
+      <button v-if="isOpen" class="backdrop" aria-label="Close menu" @click="closeSidebar"></button>
+      <aside class="sidebar" :class="{ open: isOpen }">
+        <div class="brand">
+          <span class="brand-mark">V</span>
+          <div><strong>Vikoba</strong><small>Management Platform</small></div>
         </div>
-        <div>
-          <strong>Vikoba</strong>
-          <span>Admin Console</span>
+        <label class="sidebar-search"><i class="bi bi-search"></i><input type="search" placeholder="Search..." /></label>
+        <span class="nav-label">Workspace</span>
+        <nav aria-label="Main navigation">
+          <router-link v-for="item in navItems" :key="item.href" :to="item.href" :class="{ active: $route.path === item.href }" @click="closeSidebar">
+            <i class="bi" :class="item.icon"></i><span>{{ item.label }}</span>
+          </router-link>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="profile">
+          <span class="profile-avatar">{{ userInitial }}</span>
+          <div><strong>{{ userRole }}</strong><small>Administrator</small></div>
+          <button type="button" aria-label="Log out" @click="handleLogout"><i class="bi bi-box-arrow-right"></i></button>
         </div>
-      </div>
+      </aside>
 
-      <nav class="sidebar-nav" aria-label="Dashboard navigation">
-        <router-link
-          v-for="item in navItems"
-          :key="item.label"
-          class="nav-link"
-          :class="{ active: $route.path === item.href }"
-          :to="item.href"
-          @click="closeSidebar"
-        >
-          <i class="bi" :class="item.icon"></i>
-          <span>{{ item.label }}</span>
-        </router-link>
-      </nav>
-
-      <div class="sidebar-summary">
-        <span>Workspace</span>
-        <strong>Vikoba Management</strong>
-        <small>Member finance operations</small>
-      </div>
-    </aside>
-
-    <div class="main-panel">
-      <header class="topbar">
-        <div class="topbar-left">
-          <button
-            class="icon-button menu-button"
-            type="button"
-            aria-label="Open navigation"
-            @click="toggleSidebar"
-          >
-            <i class="bi bi-list"></i>
-          </button>
-
-          <button
-            class="icon-button collapse-button"
-            type="button"
-            aria-label="Toggle sidebar"
-            @click="toggleCollapse"
-            title="Toggle sidebar"
-          >
-            <i
-              :class="
-                isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left'
-              "
-            ></i>
-          </button>
-
-          <div>
-            <span class="topbar-kicker">{{ props.pageSubtitle }}</span>
-            <h1>{{ props.pageTitle }}</h1>
+      <section class="main-panel">
+        <header class="topbar">
+          <div class="heading-group">
+            <button class="mobile-menu" type="button" aria-label="Open menu" @click="isOpen = true"><i class="bi bi-list"></i></button>
+            <button class="collapse-menu" type="button" aria-label="Collapse sidebar" @click="isCollapsed = !isCollapsed"><i class="bi" :class="isCollapsed ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar'"></i></button>
+            <div><span>{{ pageSubtitle }}</span><h1>{{ pageTitle }}</h1></div>
           </div>
-        </div>
-
-        <div class="topbar-actions">
-          <div class="user-chip">
-            <div class="user-avatar">{{ userInitial }}</div>
-            <div>
-              <span>{{ userRole }}</span>
-              <strong>Signed in</strong>
-            </div>
+          <div class="top-actions">
+            <span class="refresh-note">Auto-refreshing</span>
+            <button type="button" @click="$router.go(0)"><i class="bi bi-arrow-repeat"></i><span>Refresh</span></button>
+            <button class="primary-action" type="button" @click="$router.push('/members')"><i class="bi bi-person-plus"></i><span>Member</span></button>
           </div>
-
-          <button class="logout-button" type="button" @click="handleLogout">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Logout</span>
-          </button>
-        </div>
-      </header>
-
-      <main class="content-area">
-        <slot />
-      </main>
+        </header>
+        <main><slot /></main>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped>
-.app-shell {
-  min-height: 100vh;
-  height: 100vh;
-  display: block;
-  overflow: hidden;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(20, 184, 166, 0.16),
-      transparent 28rem
-    ),
-    linear-gradient(135deg, #f7faf9 0%, #edf4f7 100%);
-  color: #17212b;
-}
-
-.sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 1040;
-  width: min(84vw, 292px);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  background: #fbfdff;
-  color: #0f172a;
-  border-right: 1px solid rgba(15, 23, 42, 0.04);
-  box-shadow: 8px 0 30px rgba(15, 23, 42, 0.04);
-  transform: translateX(-105%);
-  transition:
-    transform 0.28s ease,
-    width 0.28s ease,
-    box-shadow 0.2s ease;
-  border-bottom-right-radius: 12px;
-}
-
-.sidebar::after {
-  display: none;
-}
-
-.sidebar-open {
-  transform: translateX(0);
-}
-
-.sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1030;
-  border: 0;
-  background: rgba(15, 23, 42, 0.46);
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.2s ease both;
-}
-
-.sidebar.sidebar-collapsed {
-  width: 84px !important;
-}
-.sidebar-collapsed .nav-link span {
-  display: none;
-}
-.sidebar-collapsed .sidebar-brand {
-  justify-content: center;
-}
-.sidebar-collapsed .sidebar-brand strong,
-.sidebar-collapsed .sidebar-brand span,
-.sidebar-collapsed .sidebar-summary {
-  display: none;
-}
-.sidebar-collapsed .nav-link {
-  justify-content: center;
-}
-.sidebar-collapsed .nav-link i {
-  margin: 0 auto;
-}
-.collapse-button {
-  display: none;
-  margin-left: 0.5rem;
-}
-
-.sidebar-brand,
-.sidebar-nav,
-.sidebar-summary {
-  position: relative;
-  z-index: 1;
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.35rem;
-}
-.brand-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: #e6f0ff;
-  color: #0369a1;
-  font-size: 1.15rem;
-}
-.sidebar-brand strong {
-  display: block;
-  font-size: 1.05rem;
-}
-.sidebar-brand span {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.sidebar-nav {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-}
-.nav-link {
-  min-height: 52px;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.6rem;
-  border-radius: 10px;
-  text-decoration: none;
-  color: var(--muted);
-  font-weight: 800;
-}
-.nav-link i {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: #eef6ff;
-  color: #0369a1;
-  font-size: 1.05rem;
-}
-.nav-link span {
-  flex: 1;
-}
-.nav-link:hover {
-  background: rgba(3, 105, 161, 0.06);
-  color: #0369a1;
-}
-.nav-link.active {
-  background: #e8f2ff;
-  color: #0369a1;
-  box-shadow: inset 4px 0 0 #2563eb;
-}
-
-.sidebar-summary {
-  margin-top: auto;
-  padding: 1rem;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-}
-.sidebar-summary span {
-  display: block;
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.sidebar-summary strong {
-  display: block;
-  margin-top: 0.3rem;
-  font-size: 0.98rem;
-}
-.sidebar-summary small {
-  display: block;
-  margin-top: 0.3rem;
-  color: var(--muted);
-}
-
-.main-panel {
-  min-width: 0;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  position: relative;
-  transition: width 0.28s ease;
-}
-
-.app-shell.sidebar-collapsed .sidebar {
-  width: 84px !important;
-}
-
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  min-height: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.85rem;
-  padding: 0.9rem clamp(0.9rem, 3vw, 1.35rem);
-  border-bottom: 1px solid rgba(30, 56, 73, 0.08);
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(16px);
-}
-
-.topbar-left,
-.topbar-actions,
-.user-chip,
-.logout-button {
-  display: flex;
-  align-items: center;
-}
-
-.topbar-left {
-  min-width: 0;
-  gap: 0.85rem;
-}
-
-.topbar-left h1 {
-  margin: 0;
-  color: #17212b;
-  font-size: 1.4rem;
-  line-height: 1.05;
-  font-weight: 850;
-}
-
-.icon-button {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  border: 1px solid #d8e2e8;
-  background: #ffffff;
-  color: #0f766e;
-  font-size: 1.3rem;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.icon-button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(20, 184, 166, 0.45);
-  box-shadow: 0 12px 28px rgba(25, 48, 65, 0.1);
-}
-
-.topbar-actions {
-  gap: 0.75rem;
-}
-
-.user-chip {
-  display: none;
-  gap: 0.7rem;
-  padding: 0.5rem 0.85rem;
-  border: 1px solid rgba(30, 56, 73, 0.08);
-  border-radius: 12px;
-  background: #ffffff;
-}
-
-.user-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #ccfbf1;
-  color: #0f766e;
-  font-weight: 850;
-  display: grid;
-  place-items: center;
-}
-
-.user-chip strong {
-  display: block;
-  margin-top: 0.05rem;
-  color: #17212b;
-  font-size: 0.86rem;
-}
-
-.logout-button {
-  min-height: 42px;
-  gap: 0.45rem;
-  padding: 0 0.9rem;
-  border: 0;
-  border-radius: 10px;
-  background: #fff1f2;
-  color: #be123c;
-  font-weight: 850;
-  transition:
-    transform 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.logout-button:hover {
-  transform: translateY(-1px);
-  background: #ffe4e6;
-  box-shadow: 0 8px 18px rgba(190, 18, 60, 0.12);
-}
-
-.logout-button span {
-  display: none;
-}
-
-.content-area {
-  min-width: 0;
-  padding: clamp(0.9rem, 2vw, 1.4rem);
-  animation: riseIn 0.42s ease both;
-  overflow-y: auto;
-  max-height: calc(100vh - 76px);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes riseIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (min-width: 576px) {
-  .user-chip,
-  .logout-button span {
-    display: flex;
-  }
-
-  .topbar-left h1 {
-    font-size: 1.55rem;
-  }
-}
-
-@media (min-width: 992px) {
-  .app-shell {
-    display: grid;
-    grid-template-columns: 292px 1fr;
-  }
-
-  .app-shell.sidebar-collapsed {
-    grid-template-columns: 84px 1fr;
-  }
-
-  .sidebar {
-    position: sticky;
-    top: 0;
-    width: 292px;
-    min-height: 100vh;
-    transform: none;
-    border-bottom-right-radius: 0;
-  }
-
-  .sidebar.sidebar-collapsed {
-    width: 84px !important;
-  }
-
-  .main-panel {
-    width: 100%;
-  }
-
-  .sidebar-backdrop,
-  .menu-button {
-    display: none;
-  }
-  .collapse-button {
-    display: inline-flex;
-  }
-
-  .topbar {
-    min-height: 84px;
-    padding-inline: 1.5rem;
-  }
-
-  .content-area {
-    padding: 1.5rem;
-    max-height: calc(100vh - 84px);
-  }
-}
-
-@media (max-width: 420px) {
-  .topbar {
-    align-items: flex-start;
-  }
-
-  .topbar-actions {
-    margin-top: 0.05rem;
-  }
-
-  .logout-button {
-    width: 42px;
-    padding: 0;
-    justify-content: center;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+.viewport-frame{min-height:100vh;padding:0;background:#7659e8}.app-shell{min-height:100vh;background:#f7f7f9;color:#242328}.sidebar{position:fixed;inset:0 auto 0 0;z-index:30;width:min(82vw,240px);display:flex;flex-direction:column;padding:1rem;background:#fbfbfc;border-right:1px solid #e9e9ed;transform:translateX(-102%);transition:transform .25s ease,width .25s ease}.sidebar.open{transform:translateX(0)}.backdrop{position:fixed;inset:0;z-index:25;border:0;background:rgba(24,24,27,.42)}.brand{display:flex;align-items:center;gap:.65rem;padding:.1rem .2rem 1rem}.brand-mark{width:2rem;height:2rem;display:grid;place-items:center;border-radius:7px;background:linear-gradient(135deg,#8c72f6,#7055df);color:#fff;font-size:.75rem;font-weight:800}.brand strong,.brand small,.profile strong,.profile small{display:block}.brand strong{font-size:.85rem}.brand small,.profile small{color:#92919a;font-size:.62rem}.sidebar-search{display:flex;align-items:center;gap:.45rem;padding:.52rem .6rem;border:1px solid #e8e7ec;border-radius:8px;background:#fff;color:#9a99a2}.sidebar-search input{width:100%;border:0;outline:0;background:transparent;font-size:.72rem}.nav-label{margin:1rem .35rem .4rem;color:#a1a0a8;font-size:.58rem;text-transform:uppercase}nav{display:grid;gap:.22rem}nav a{display:flex;align-items:center;gap:.7rem;padding:.62rem .7rem;border-radius:7px;color:#65646d;text-decoration:none;font-size:.75rem;font-weight:500}nav a i{width:1rem;text-align:center}nav a:hover,nav a.active{background:#fff;color:#201f24;box-shadow:0 2px 10px rgba(24,24,27,.05)}nav a.active{font-weight:700}nav a.active i{color:#7659e8}.sidebar-spacer{flex:1}.profile{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.55rem;padding-top:.8rem;border-top:1px solid #ededf0}.profile-avatar{width:2rem;height:2rem;display:grid;place-items:center;border-radius:50%;background:#e9e4ff;color:#6e54da;font-weight:700}.profile strong{font-size:.74rem}.profile button{border:0;background:transparent;color:#8f8e97}.main-panel{min-width:0;min-height:100vh}.topbar{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem 1rem;border-bottom:1px solid #e8e8ec;background:rgba(255,255,255,.96)}.heading-group,.top-actions{display:flex;align-items:center;gap:.6rem}.heading-group>div>span{display:block;color:#96959d;font-size:.65rem}.heading-group h1{margin:.12rem 0 0;font-size:1.08rem;line-height:1.2}.mobile-menu,.collapse-menu,.top-actions button{height:2.2rem;border:1px solid #e5e4ea;border-radius:8px;background:#fff;color:#5d5c64}.mobile-menu,.collapse-menu{width:2.2rem}.collapse-menu{display:none}.top-actions button{display:inline-flex;align-items:center;gap:.4rem;padding:0 .7rem;font-size:.7rem}.top-actions .primary-action{border-color:#7659e8;background:#7659e8;color:#fff}.refresh-note{display:none;color:#9a99a2;font-size:.6rem}main{padding:.75rem}.collapsed .sidebar nav a span,.collapsed .brand div,.collapsed .sidebar-search,.collapsed .nav-label,.collapsed .profile div,.collapsed .profile button{display:none}.collapsed .sidebar nav a{justify-content:center}.collapsed .profile{grid-template-columns:1fr;justify-items:center}
+@media(min-width:600px){.viewport-frame{padding:4px;border-radius:18px}.app-shell{min-height:calc(100vh - 8px);border-radius:15px;overflow:hidden}.top-actions button span{display:inline}.refresh-note{display:inline}main{padding:1rem}}
+@media(max-width:440px){.top-actions button span,.refresh-note{display:none}.top-actions button{width:2.2rem;padding:0;justify-content:center}}
+@media(min-width:960px){.app-shell{display:grid;grid-template-columns:240px minmax(0,1fr);transition:grid-template-columns .25s ease}.app-shell.collapsed{grid-template-columns:72px minmax(0,1fr)}.sidebar{position:sticky;top:0;width:240px;height:calc(100vh - 8px);transform:none}.collapsed .sidebar{width:72px}.mobile-menu,.backdrop{display:none}.collapse-menu{display:inline-grid;place-items:center}main{padding:1rem}.topbar{padding-inline:1.25rem}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+
+
