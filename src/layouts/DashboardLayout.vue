@@ -23,6 +23,7 @@ const navItems = [
   { label: "Penalties", icon: "bi-exclamation-diamond", href: "/penalties", roles: ["chairperson", "secretary"] },
   { label: "Transactions", icon: "bi-journal-text", href: "/transactions", roles: ["chairperson", "treasurer"] },
   { label: "Expenses", icon: "bi-receipt", href: "/expenses", roles: ["chairperson", "treasurer", "secretary"] },
+  { label: "Income", icon: "bi-cash-coin", href: "/income", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Reports", icon: "bi-bar-chart", href: "/reports", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Financial Cycles", icon: "bi-calendar2-range", href: "/cycles", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Share-out", icon: "bi-pie-chart", href: "/share-out", roles: ["chairperson", "treasurer", "secretary"] },

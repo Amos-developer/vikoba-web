@@ -23,7 +23,7 @@ const form = ref({ member_id: "", amount: "", type: "saving", description: "", r
 const currency = (value) => new Intl.NumberFormat("en-TZ", { style: "currency", currency: "TZS", maximumFractionDigits: 0 }).format(value || 0);
 const typeLabel = (value) => {
   if (value === "loan") return "Loan disbursement";
-  return types.find(([key]) => key === value)?.[1] || value;
+  return types.find(([key]) => key === value)?.[1] || value.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 };
 const inflow = computed(() => transactions.value.filter((item) => item.direction === "inflow").reduce((sum, item) => sum + Number(item.amount), 0));
 const outflow = computed(() => transactions.value.filter((item) => item.direction === "outflow").reduce((sum, item) => sum + Number(item.amount), 0));
@@ -103,5 +103,4 @@ onMounted(() => {
 .header-actions{display:flex;flex-wrap:wrap;gap:.5rem}.ledger-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-bottom:1rem}.immutable{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .6rem;border-radius:999px;background:#f0edff;color:#6f56db;font-size:.66rem}.filter-grid{display:grid;gap:.5rem;margin:0 -1rem 1rem;padding:.75rem 1rem;border-block:1px solid #f0f0f3;background:#fafafa}.filter-grid input,.filter-grid select,.search-field{min-height:38px;border:1px solid #e5e4ea;border-radius:8px;background:#fff;font-size:.72rem}.filter-grid>input,.filter-grid select{padding:0 .65rem}.search-field{display:flex;align-items:center;gap:.5rem;padding:0 .65rem}.search-field input{width:100%;min-height:auto;border:0;outline:0}.ledger-table{min-width:940px}.date-cell{white-space:nowrap;color:#777680}.ledger-table code{color:#7056dc;font-size:.68rem}.movement-icon{width:1.65rem;height:1.65rem;display:inline-grid;place-items:center;margin-right:.45rem;border-radius:7px}.movement-icon.inflow{background:#eaf9f1;color:#168657}.movement-icon.outflow{background:#fff0f1;color:#cf4b58}.inflow-text{color:#168657!important}.outflow-text{color:#cf4b58!important}.audit-note{display:flex;align-items:center;gap:.4rem;margin:1rem 0 0;padding:.65rem;border-radius:8px;background:#f7f5ff;color:#6f56db;font-size:.68rem}@media(min-width:768px){.filter-grid{grid-template-columns:minmax(210px,1.4fr) repeat(2,minmax(130px,.8fr)) repeat(2,minmax(120px,.65fr)) auto}}
 .filter-actions{display:flex;gap:.4rem}.filter-actions .btn{white-space:nowrap}.filter-feedback{display:flex;align-items:center;gap:.4rem;margin:-.35rem 0 .8rem;color:#7056dc;font-size:.68rem}
 </style>
-
 
