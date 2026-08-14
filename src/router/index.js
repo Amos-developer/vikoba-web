@@ -9,6 +9,7 @@ import PenaltiesView from "../views/penalties/PenaltiesView.vue";
 import TransactionsView from "../views/transactions/TransactionsView.vue";
 import RepaymentsView from "../views/repayments/RepaymentsView.vue";
 import ReportsView from "../views/reports/ReportsView.vue";
+import AccessView from "../views/admin/AccessView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [
@@ -70,6 +71,12 @@ const routes = [
     path: "/reports",
     name: "Reports",
     component: ReportsView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/access",
+    name: "Access",
+    component: AccessView,
     meta: { requiresAuth: true },
   },
 ];

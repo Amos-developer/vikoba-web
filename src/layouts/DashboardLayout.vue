@@ -13,16 +13,22 @@ const authStore = useAuthStore();
 const isOpen = ref(false);
 const isCollapsed = ref(false);
 const navItems = [
-  { label: "Dashboard", icon: "bi-grid", href: "/" },
-  { label: "Members", icon: "bi-people", href: "/members" },
-  { label: "Savings", icon: "bi-wallet2", href: "/savings" },
-  { label: "Loans", icon: "bi-bank", href: "/loans" },
-  { label: "Repayments", icon: "bi-arrow-repeat", href: "/repayments" },
-  { label: "Penalties", icon: "bi-exclamation-diamond", href: "/penalties" },
-  { label: "Transactions", icon: "bi-journal-text", href: "/transactions" },
-  { label: "Reports", icon: "bi-bar-chart", href: "/reports" },
+  { label: "Dashboard", icon: "bi-grid", href: "/", roles: [] },
+  { label: "Members", icon: "bi-people", href: "/members", roles: ["chairperson", "secretary"] },
+  { label: "Savings", icon: "bi-wallet2", href: "/savings", roles: ["treasurer", "secretary"] },
+  { label: "Loans", icon: "bi-bank", href: "/loans", roles: ["chairperson", "treasurer"] },
+  { label: "Repayments", icon: "bi-arrow-repeat", href: "/repayments", roles: ["treasurer"] },
+  { label: "Penalties", icon: "bi-exclamation-diamond", href: "/penalties", roles: ["chairperson", "secretary"] },
+  { label: "Transactions", icon: "bi-journal-text", href: "/transactions", roles: ["chairperson", "treasurer"] },
+  { label: "Reports", icon: "bi-bar-chart", href: "/reports", roles: ["chairperson", "treasurer", "secretary"] },
+  { label: "Users & Approvals", icon: "bi-shield-check", href: "/access", roles: ["chairperson", "treasurer", "secretary"] },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
+const visibleNavItems = computed(() => navItems.filter(
+  (item) => userRole.value.toLowerCase() === "admin"
+    || !item.roles.length
+    || item.roles.includes(userRole.value.toLowerCase()),
+));
 const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());
 const closeSidebar = () => (isOpen.value = false);
 const handleLogout = () => {
@@ -43,7 +49,7 @@ const handleLogout = () => {
         <label class="sidebar-search"><i class="bi bi-search"></i><input type="search" placeholder="Search..." /></label>
         <span class="nav-label">Workspace</span>
         <nav aria-label="Main navigation">
-          <router-link v-for="item in navItems" :key="item.href" :to="item.href" :class="{ active: $route.path === item.href }" @click="closeSidebar">
+          <router-link v-for="item in visibleNavItems" :key="item.href" :to="item.href" :class="{ active: $route.path === item.href }" @click="closeSidebar">
             <i class="bi" :class="item.icon"></i><span>{{ item.label }}</span>
           </router-link>
         </nav>
