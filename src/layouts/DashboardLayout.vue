@@ -76,6 +76,43 @@ const handleLogout = () => {
 @media(max-width:440px){.top-actions button span,.refresh-note{display:none}.top-actions button{width:2.2rem;padding:0;justify-content:center}}
 @media(min-width:960px){.app-shell{display:grid;grid-template-columns:240px minmax(0,1fr);transition:grid-template-columns .25s ease}.app-shell.collapsed{grid-template-columns:72px minmax(0,1fr)}.sidebar{position:sticky;top:0;width:240px;height:calc(100vh - 8px);transform:none}.collapsed .sidebar{width:72px}.mobile-menu,.backdrop{display:none}.collapse-menu{display:inline-grid;place-items:center}main{padding:1rem}.topbar{padding-inline:1.25rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style>
+/* Full-screen application shell: no decorative frame around the UI. */
+.viewport-frame {
+  padding: 0;
+  background: #f6f7f9;
+}
 
+.app-shell {
+  min-height: 100vh;
+  border-radius: 0;
+  background: #f6f7f9;
+  overflow: visible;
+}
+
+.sidebar {
+  background: #ffffff;
+}
+
+@media (min-width: 600px) {
+  .viewport-frame {
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .app-shell {
+    min-height: 100vh;
+    border-radius: 0;
+  }
+}
+
+@media (min-width: 960px) {
+  .sidebar {
+    height: 100vh;
+  }
+
+  main {
+    padding: 1.5rem;
+  }
+}
+</style>
 
