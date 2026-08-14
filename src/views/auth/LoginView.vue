@@ -1,45 +1,31 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-
 import AuthLayout from "../../layouts/AuthLayout.vue";
-import { useAuthStore } from "../../stores/auth.store";
 import { login } from "../../services/auth.service";
+import { useAuthStore } from "../../stores/auth.store";
 
 const email = ref("");
 const password = ref("");
 const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref("");
-
 const router = useRouter();
 const authStore = useAuthStore();
 
 const handleLogin = async () => {
   if (!email.value || !password.value) {
-    errorMessage.value = "Please enter your email and password.";
+    errorMessage.value = "Enter your email address and password.";
     return;
   }
-
   try {
     loading.value = true;
     errorMessage.value = "";
-
-    const response = await login({
-      email: email.value,
-      password: password.value,
-    });
-
-    const token = response.data.token;
-
-    authStore.setAuth(token);
-
-    router.push("/");
+    const response = await login({ email: email.value, password: password.value });
+    authStore.setAuth(response.data.token);
+    await router.replace("/");
   } catch (error) {
-    console.log("Login failed", error);
-    errorMessage.value =
-      error.response?.data?.message ||
-      "Invalid email or password. Please try again.";
+    errorMessage.value = error.response?.data?.message || "The email or password is incorrect.";
   } finally {
     loading.value = false;
   }
@@ -48,415 +34,51 @@ const handleLogin = async () => {
 
 <template>
   <AuthLayout>
-    <main class="login-page">
-      <section class="login-shell">
-        <div class="brand-panel">
-          <div class="brand-mark">
-            <i class="bi bi-bank2"></i>
+    <main class="auth-page">
+      <section class="auth-shell">
+        <aside class="welcome-panel">
+          <div class="brand"><span>V</span><div><strong>Vikoba</strong><small>Group Finance Platform</small></div></div>
+          <div class="welcome-copy">
+            <span class="eyebrow">Built for accountable groups</span>
+            <h1>One clear view of your group finances.</h1>
+            <p>Manage savings, loans, repayments, meetings, and approvals from a secure shared workspace.</p>
           </div>
-
-          <div class="brand-copy">
-            <span>Vikoba Admin</span>
-            <h1>Welcome back</h1>
-            <p>Sign in to manage members, savings, loans, and account activity with confidence.</p>
+          <div class="feature-list">
+            <div><i class="bi bi-shield-check"></i><span><strong>Controlled access</strong><small>Role-based permissions and approvals</small></span></div>
+            <div><i class="bi bi-journal-check"></i><span><strong>Complete audit trail</strong><small>Every financial movement stays traceable</small></span></div>
           </div>
+          <p class="welcome-footer"><i class="bi bi-lock-fill"></i> Secure group administration</p>
+        </aside>
 
-          <div class="trust-grid">
-            <div>
-              <i class="bi bi-shield-check"></i>
-              <strong>Secure access</strong>
-              <span>Protected dashboard sessions</span>
-            </div>
-            <div>
-              <i class="bi bi-graph-up-arrow"></i>
-              <strong>Live insights</strong>
-              <span>Clear group performance data</span>
-            </div>
-          </div>
-        </div>
+        <section class="form-panel">
+          <div class="mobile-brand"><span>V</span><div><strong>Vikoba</strong><small>Group Finance Platform</small></div></div>
+          <div class="form-heading"><span>Welcome back</span><h2>Sign in to your account</h2><p>Enter your account details to continue.</p></div>
 
-        <form class="login-card" @submit.prevent="handleLogin">
-          <div class="form-heading">
-            <span>Account login</span>
-            <h2>Sign in</h2>
-          </div>
+          <form @submit.prevent="handleLogin">
+            <div v-if="errorMessage" class="alert-message" role="alert"><i class="bi bi-exclamation-circle"></i><span>{{ errorMessage }}</span></div>
 
-          <div v-if="errorMessage" class="alert-message">
-            <i class="bi bi-exclamation-circle"></i>
-            <span>{{ errorMessage }}</span>
-          </div>
+            <label class="field-group" for="email">
+              <span>Email address</span>
+              <div class="input-wrap"><i class="bi bi-envelope"></i><input id="email" v-model.trim="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required autofocus /></div>
+            </label>
 
-          <label class="field-group" for="email">
-            <span>Email address</span>
-            <div class="input-wrap">
-              <i class="bi bi-envelope"></i>
-              <input
-                id="email"
-                v-model.trim="email"
-                type="email"
-                autocomplete="email"
-                placeholder="name@example.com"
-              />
-            </div>
-          </label>
+            <label class="field-group" for="password">
+              <span>Password</span>
+              <div class="input-wrap"><i class="bi bi-lock"></i><input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" placeholder="Enter your password" required /><button type="button" :aria-label="showPassword ? 'Hide password' : 'Show password'" @click="showPassword=!showPassword"><i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i></button></div>
+            </label>
 
-          <label class="field-group" for="password">
-            <span>Password</span>
-            <div class="input-wrap">
-              <i class="bi bi-lock"></i>
-              <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                autocomplete="current-password"
-                placeholder="Enter your password"
-              />
-              <button
-                class="icon-button"
-                type="button"
-                :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                @click="showPassword = !showPassword"
-              >
-                <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
-              </button>
-            </div>
-          </label>
-
-          <button class="submit-button" type="submit" :disabled="loading">
-            <span v-if="loading" class="spinner-border spinner-border-sm"></span>
-            <i v-else class="bi bi-box-arrow-in-right"></i>
-            {{ loading ? "Signing in..." : "Sign in" }}
-          </button>
-        </form>
+            <button class="submit-button" type="submit" :disabled="loading"><span v-if="loading" class="spinner-border spinner-border-sm"></span><span>{{ loading ? "Signing in..." : "Sign in" }}</span><i v-if="!loading" class="bi bi-arrow-right"></i></button>
+          </form>
+          <p class="support-note">Having trouble signing in? Contact your group administrator.</p>
+        </section>
       </section>
     </main>
   </AuthLayout>
 </template>
 
 <style scoped>
-.login-page {
-  width: 100%;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: clamp(1rem, 4vw, 2rem);
-  background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.2), transparent 26rem),
-    linear-gradient(135deg, #f7faf9 0%, #edf4f7 100%);
-  color: #17212b;
-}
-
-.login-shell {
-  width: min(100%, 1040px);
-  display: grid;
-  gap: 1rem;
-  animation: riseIn 0.55s ease both;
-}
-
-.brand-panel,
-.login-card {
-  border: 1px solid rgba(30, 56, 73, 0.08);
-  border-radius: 8px;
-  box-shadow: 0 24px 70px rgba(17, 37, 49, 0.12);
-}
-
-.brand-panel {
-  position: relative;
-  overflow: hidden;
-  min-height: 320px;
-  display: grid;
-  align-content: end;
-  gap: 1.3rem;
-  padding: clamp(1.25rem, 4vw, 2rem);
-  background:
-    linear-gradient(135deg, rgba(8, 29, 38, 0.94), rgba(13, 91, 86, 0.9)),
-    url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1400&q=80");
-  background-position: center;
-  background-size: cover;
-  color: #ffffff;
-}
-
-.brand-panel::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 5px;
-  background: linear-gradient(90deg, #22c55e, #14b8a6, #f59e0b);
-}
-
-.brand-mark,
-.brand-copy,
-.trust-grid {
-  position: relative;
-  z-index: 1;
-}
-
-.brand-mark {
-  width: 58px;
-  height: 58px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #9de8d6;
-  font-size: 1.7rem;
-  backdrop-filter: blur(12px);
-}
-
-.brand-copy span,
-.form-heading span,
-.field-group > span {
-  display: block;
-  color: #5d7282;
-  font-size: 0.76rem;
-  font-weight: 850;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.brand-copy span {
-  color: #9de8d6;
-}
-
-.brand-copy h1 {
-  margin: 0.35rem 0 0;
-  font-size: 2.15rem;
-  line-height: 0.98;
-  font-weight: 850;
-  letter-spacing: 0;
-}
-
-.brand-copy p {
-  max-width: 560px;
-  margin: 0.9rem 0 0;
-  color: rgba(255, 255, 255, 0.76);
-}
-
-.trust-grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.trust-grid > div {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.15rem 0.7rem;
-  padding: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-}
-
-.trust-grid i {
-  grid-row: span 2;
-  color: #9de8d6;
-  font-size: 1.3rem;
-}
-
-.trust-grid strong {
-  font-size: 0.94rem;
-}
-
-.trust-grid span {
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 0.84rem;
-}
-
-.login-card {
-  display: grid;
-  gap: 1rem;
-  padding: clamp(1.1rem, 5vw, 2rem);
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.form-heading h2 {
-  margin: 0.25rem 0 0;
-  color: #17212b;
-  font-size: 1.65rem;
-  font-weight: 850;
-}
-
-.alert-message {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-start;
-  padding: 0.85rem;
-  border-radius: 8px;
-  background: #fff1f2;
-  color: #be123c;
-  font-weight: 700;
-  animation: shakeIn 0.25s ease both;
-}
-
-.field-group {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.input-wrap {
-  min-height: 54px;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0 0.85rem;
-  border: 1px solid #d8e2e8;
-  border-radius: 8px;
-  background: #ffffff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.input-wrap:focus-within {
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.12);
-  transform: translateY(-1px);
-}
-
-.input-wrap > i {
-  color: #0f766e;
-  font-size: 1.05rem;
-}
-
-.input-wrap input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #17212b;
-  font: inherit;
-}
-
-.input-wrap input::placeholder {
-  color: #94a3b8;
-}
-
-.icon-button {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #52616f;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.icon-button:hover {
-  background: #ccfbf1;
-  color: #0f766e;
-}
-
-.submit-button {
-  min-height: 54px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  margin-top: 0.25rem;
-  border: 0;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #0f766e, #0e9488);
-  color: #ffffff;
-  font-weight: 850;
-  box-shadow: 0 16px 34px rgba(15, 118, 110, 0.24);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-}
-
-.submit-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(15, 118, 110, 0.3);
-  filter: brightness(1.03);
-}
-
-.submit-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.78;
-}
-
-@keyframes riseIn {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shakeIn {
-  0% {
-    transform: translateX(-4px);
-  }
-
-  100% {
-    transform: translateX(0);
-  }
-}
-
-@media (min-width: 640px) {
-  .trust-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .brand-copy h1 {
-    font-size: 3rem;
-  }
-
-  .form-heading h2 {
-    font-size: 2rem;
-  }
-}
-
-@media (min-width: 992px) {
-  .login-shell {
-    grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
-    align-items: stretch;
-  }
-
-  .brand-panel {
-    min-height: 640px;
-  }
-
-  .login-card {
-    align-content: center;
-  }
-
-  .brand-copy h1 {
-    font-size: 4.5rem;
-  }
-
-  .form-heading h2 {
-    font-size: 2.4rem;
-  }
-}
-
-@media (max-width: 420px) {
-  .login-page {
-    padding: 0.8rem;
-  }
-
-  .brand-panel {
-    min-height: 300px;
-  }
-
-  .trust-grid > div {
-    padding: 0.8rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+.auth-page{min-height:100dvh;display:grid;place-items:center;padding:1rem;background:#f5f5f8;color:#211f27}.auth-shell{width:min(100%,1080px);display:grid;overflow:hidden;border:1px solid #e8e6ee;border-radius:18px;background:#fff;box-shadow:0 24px 70px rgba(35,28,58,.12)}.welcome-panel{display:none}.form-panel{padding:1.4rem}.mobile-brand,.brand{display:flex;align-items:center;gap:.7rem}.mobile-brand>span,.brand>span{width:2.4rem;height:2.4rem;display:grid;place-items:center;border-radius:9px;background:linear-gradient(135deg,#8b70f2,#6849d6);color:#fff;font-size:.85rem;font-weight:800;box-shadow:0 8px 18px rgba(105,73,215,.24)}.mobile-brand strong,.mobile-brand small,.brand strong,.brand small{display:block}.mobile-brand strong,.brand strong{font-size:.9rem}.mobile-brand small,.brand small{margin-top:.05rem;color:#8d8996;font-size:.65rem}.form-heading{margin:2.6rem 0 1.7rem}.form-heading>span,.eyebrow{color:#7457df;font-size:.7rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}.form-heading h2{margin:.4rem 0 .55rem;font-size:clamp(1.6rem,7vw,2rem);letter-spacing:-.035em}.form-heading p{margin:0;color:#85818c;font-size:.86rem}.form-panel form{display:grid;gap:1.05rem}.field-group{display:grid;gap:.45rem}.field-group>span{font-size:.74rem;font-weight:650}.input-wrap{min-height:50px;display:flex;align-items:center;gap:.65rem;padding:0 .8rem;border:1px solid #dedbe5;border-radius:10px;background:#fff;transition:.2s ease}.input-wrap:focus-within{border-color:#795ee2;box-shadow:0 0 0 4px rgba(121,94,226,.11)}.input-wrap>i{color:#8c8795}.input-wrap input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#242128;font-size:.85rem}.input-wrap input::placeholder{color:#aaa6b1}.input-wrap button{width:2rem;height:2rem;display:grid;place-items:center;flex:none;border:0;border-radius:7px;background:transparent;color:#85818c}.input-wrap button:hover{background:#f2effd;color:#6e51d7}.alert-message{display:flex;align-items:flex-start;gap:.55rem;padding:.75rem .8rem;border:1px solid #f5ccd1;border-radius:9px;background:#fff5f6;color:#b53d4a;font-size:.75rem}.submit-button{min-height:50px;display:flex;align-items:center;justify-content:center;gap:.6rem;margin-top:.2rem;padding:0 1rem;border:0;border-radius:10px;background:#7255de;color:#fff;font-size:.82rem;font-weight:700;box-shadow:0 10px 24px rgba(103,75,208,.23);transition:.2s ease}.submit-button i{transition:transform .2s ease}.submit-button:hover:not(:disabled){background:#6548d2;transform:translateY(-1px);box-shadow:0 14px 30px rgba(103,75,208,.28)}.submit-button:hover:not(:disabled) i{transform:translateX(3px)}.submit-button:disabled{cursor:not-allowed;opacity:.7}.support-note{margin:1.5rem 0 0;color:#96919d;text-align:center;font-size:.68rem}
+@media(min-width:560px){.auth-page{padding:2rem}.form-panel{padding:2.5rem}.auth-shell{max-width:520px}.form-heading{margin-top:3.2rem}}
+@media(min-width:900px){.auth-shell{max-width:1080px;grid-template-columns:minmax(0,1.08fr) minmax(380px,.92fr);min-height:650px}.welcome-panel{position:relative;display:flex;flex-direction:column;padding:2.4rem;overflow:hidden;background:linear-gradient(145deg,#292039,#4d368d 60%,#7052d7);color:#fff}.welcome-panel::before,.welcome-panel::after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.1)}.welcome-panel::before{width:380px;height:380px;right:-180px;top:-130px}.welcome-panel::after{width:290px;height:290px;left:-150px;bottom:-120px}.brand,.welcome-copy,.feature-list,.welcome-footer{position:relative;z-index:1}.brand small{color:rgba(255,255,255,.56)}.welcome-copy{margin:auto 0 2.2rem}.welcome-copy .eyebrow{color:#c8baf9}.welcome-copy h1{max-width:520px;margin:.65rem 0 1rem;font-size:clamp(2.7rem,4vw,4rem);line-height:1.02;letter-spacing:-.055em}.welcome-copy p{max-width:480px;margin:0;color:rgba(255,255,255,.7);font-size:.95rem;line-height:1.7}.feature-list{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem}.feature-list>div{display:flex;gap:.7rem;padding:.85rem;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:rgba(255,255,255,.07)}.feature-list i{color:#cdbfff}.feature-list span,.feature-list strong,.feature-list small{display:block}.feature-list strong{font-size:.74rem}.feature-list small{margin-top:.2rem;color:rgba(255,255,255,.55);font-size:.62rem;line-height:1.4}.welcome-footer{display:flex;align-items:center;gap:.4rem;margin:1.2rem 0 0;color:rgba(255,255,255,.48);font-size:.62rem}.form-panel{display:flex;flex-direction:column;justify-content:center;padding:clamp(2.5rem,5vw,4.4rem)}.mobile-brand{display:none}.form-heading{margin:0 0 2rem}.support-note{margin-top:2rem}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>

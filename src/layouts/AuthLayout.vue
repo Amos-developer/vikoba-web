@@ -1,7 +1,13 @@
 <template>
-  <div
-    class="min-vh-100 d-flex justify-content-center align-items-center bg-light"
-  >
-    <slot />
-  </div>
+  <div class="auth-layout"><slot /></div>
 </template>
+
+<style scoped>
+.auth-layout {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  background: #f5f5f8;
+}
+</style>
