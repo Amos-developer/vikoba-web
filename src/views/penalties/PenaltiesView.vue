@@ -110,23 +110,56 @@ onMounted(load);
     </section>
 
     <div v-if="showForm" class="modal-backdrop">
-      <div class="modal-panel penalty-modal" role="dialog" aria-modal="true" aria-labelledby="penalty-title">
+      <div class="modal-panel">
         <div class="modal-panel-header">
-          <div class="modal-title-group"><span class="modal-icon"><i class="bi bi-exclamation-diamond"></i></span><div><p class="page-header-label">{{ selected ? 'Edit record' : 'New record' }}</p><h5 id="penalty-title" class="mb-0">{{ selected ? 'Update penalty' : 'Add member penalty' }}</h5></div></div>
-          <button class="btn-close" type="button" aria-label="Close" @click="closeForm"></button>
+          <div>
+            <p class="page-header-label mb-2">{{ selected ? "Edit penalty" : "New penalty" }}</p>
+            <h5 class="mb-0">{{ selected ? "Update penalty details" : "Create a new penalty" }}</h5>
+          </div>
+          <button class="btn btn-close" type="button" aria-label="Close" @click="closeForm"></button>
         </div>
-        <form @submit.prevent="submit">
-          <section class="form-section">
-            <div class="form-section-copy"><strong>Member and charge</strong><span>Select a member and enter the penalty details.</span></div>
-            <div class="form-grid">
-              <div class="field field-wide"><label class="form-label" for="penalty-member">Member</label><div class="select-wrap"><i class="bi bi-person"></i><select id="penalty-member" v-model="form.member_id" class="form-select" required><option value="" disabled>Select a member</option><option v-for="member in members" :key="member.id" :value="member.id">{{ member.first_name }} {{ member.last_name }} Â· {{ member.phone }}</option></select></div><small v-if="!members.length">No members available. Add a member first.</small></div>
-              <div class="field"><label class="form-label" for="penalty-amount">Amount (TZS)</label><div class="input-wrap"><span>TZS</span><input id="penalty-amount" v-model="form.amount" class="form-control" type="number" min="1" step="1" placeholder="0" required /></div></div>
-              <div class="field field-wide"><label class="form-label" for="penalty-reason">Reason</label><textarea id="penalty-reason" v-model="form.reason" class="form-control" rows="3" maxlength="255" placeholder="Briefly explain why this penalty was issued" required></textarea><small>{{ form.reason.length }}/255 characters</small></div>
+
+        <form class="mt-3" @submit.prevent="submit">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label" for="penalty-member">Member</label>
+              <select id="penalty-member" v-model="form.member_id" class="form-select" required>
+                <option value="" disabled>Select a member</option>
+                <option v-for="member in members" :key="member.id" :value="member.id">
+                  {{ member.first_name }} {{ member.last_name }} â€” {{ member.phone }}
+                </option>
+              </select>
+              <small v-if="!members.length" class="text-muted">No members available. Add a member first.</small>
             </div>
-          </section>
-          <section class="form-section form-section-muted"><div class="form-section-copy"><strong>Payment details</strong><span>Set the initial status and optional due date.</span></div><div class="form-grid"><div class="field"><label class="form-label" for="penalty-status">Status</label><select id="penalty-status" v-model="form.status" class="form-select"><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="waived">Waived</option></select></div><div class="field"><label class="form-label" for="penalty-date">Due date <span>Optional</span></label><input id="penalty-date" v-model="form.due_date" class="form-control" type="date" /></div></div></section>
-          <div v-if="errorMessage" class="form-alert"><i class="bi bi-exclamation-circle"></i>{{ errorMessage }}</div>
-          <div class="modal-actions"><button type="button" class="btn btn-outline-secondary" @click="closeForm">Cancel</button><button class="btn btn-primary" :disabled="saving || !members.length"><span v-if="saving" class="spinner-border spinner-border-sm"></span>{{ saving ? 'Saving...' : selected ? 'Save changes' : 'Add penalty' }}</button></div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="penalty-amount">Amount (TZS)</label>
+              <input id="penalty-amount" v-model="form.amount" class="form-control" type="number" min="1" step="1" required />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="penalty-status">Status</label>
+              <select id="penalty-status" v-model="form.status" class="form-select">
+                <option value="unpaid">Unpaid</option>
+                <option value="paid">Paid</option>
+                <option value="waived">Waived</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="penalty-reason">Reason</label>
+              <textarea id="penalty-reason" v-model="form.reason" class="form-control" rows="3" maxlength="255" required></textarea>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="penalty-date">Due date</label>
+              <input id="penalty-date" v-model="form.due_date" class="form-control" type="date" />
+            </div>
+          </div>
+
+          <p v-if="errorMessage" class="text-danger small mt-3">{{ errorMessage }}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline-secondary" @click="closeForm">Cancel</button>
+            <button type="submit" class="btn btn-primary" :disabled="saving || !members.length">
+              {{ saving ? "Saving..." : selected ? "Save changes" : "Create penalty" }}
+            </button>
+          </div>
         </form>
       </div>
     </div>
