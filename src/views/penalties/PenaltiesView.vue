@@ -6,6 +6,15 @@ import { getMembers } from "../../services/member.service.js";
 
 const penalties = ref([]);
 const members = ref([]);
+const penaltyReasons = [
+  "Missed meeting",
+  "Late arrival",
+  "Delayed repayment",
+  "Failure to contribute",
+  "Missed savings payment",
+  "Breach of group rules",
+  "Other violation",
+];
 const loading = ref(false);
 const saving = ref(false);
 const errorMessage = ref("");
@@ -145,7 +154,10 @@ onMounted(load);
             </div>
             <div class="col-12">
               <label class="form-label" for="penalty-reason">Reason</label>
-              <textarea id="penalty-reason" v-model="form.reason" class="form-control" rows="3" maxlength="255" required></textarea>
+              <select id="penalty-reason" v-model="form.reason" class="form-select" required>
+                <option value="" disabled>Select a reason</option>
+                <option v-for="reason in penaltyReasons" :key="reason" :value="reason">{{ reason }}</option>
+              </select>
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label" for="penalty-date">Due date</label>
