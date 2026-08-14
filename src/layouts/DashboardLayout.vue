@@ -18,6 +18,7 @@ const navItems = [
   { label: "Savings", icon: "bi-wallet2", href: "/savings" },
   { label: "Loans", icon: "bi-bank", href: "/loans" },
   { label: "Penalties", icon: "bi-exclamation-diamond", href: "/penalties" },
+  { label: "Transactions", icon: "bi-journal-text", href: "/transactions" },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
 const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());
