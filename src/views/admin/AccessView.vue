@@ -24,7 +24,7 @@ const userForm = ref({ name: "", email: "", password: "", role: "member" });
 const isAdmin = computed(() => authStore.user?.role === "admin");
 const pendingCount = computed(() => approvals.value.filter((item) => item.status === "pending").length);
 const roleLabel = (role) => role.charAt(0).toUpperCase() + role.slice(1);
-const actionLabel = (action) => ({ loan_disbursement: "Loan disbursement", withdrawal: "Withdrawal", expense: "Expense", penalty_waiver: "Penalty waiver" }[action] || action);
+const actionLabel = (action) => ({ loan_disbursement: "Loan disbursement", withdrawal: "Withdrawal", expense: "Expense", penalty_waiver: "Penalty waiver", social_fund_disbursement: "Social-fund support" }[action] || action);
 const currency = (value) => new Intl.NumberFormat("en-TZ", { style: "currency", currency: "TZS", maximumFractionDigits: 0 }).format(value || 0);
 
 const load = async () => {
@@ -80,5 +80,4 @@ onMounted(load);
 <style scoped>
 .access-tabs{display:flex;gap:.35rem;margin-bottom:1rem;padding:.35rem;border:1px solid #ececf1;border-radius:10px;background:#fff}.access-tabs button{display:flex;align-items:center;gap:.45rem;padding:.6rem .8rem;border:0;border-radius:7px;background:transparent;color:#777680;font-size:.73rem}.access-tabs button.active{background:#7659e8;color:#fff}.access-tabs button span{display:grid;place-items:center;min-width:1.25rem;height:1.25rem;border-radius:999px;background:rgba(255,255,255,.2);font-size:.62rem}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}.panel-heading .form-select{width:130px}.approval-table{min-width:850px}.user-table{min-width:620px}.approval-status{display:inline-flex;padding:.28rem .55rem;border-radius:999px;font-size:.65rem;text-transform:capitalize}.approval-status.pending{background:#fff5dd;color:#a66a08}.approval-status.approved{background:#eaf9f1;color:#168657}.approval-status.rejected{background:#fff0f1;color:#cf4b58}.review-actions{display:flex;justify-content:flex-end;gap:.4rem}.reviewed-by{color:#8b8a93;font-size:.7rem}.count-pill{padding:.35rem .6rem;border-radius:999px;background:#f0edff;color:#7056dc;font-size:.68rem}.role-select{min-height:34px;padding:0 .55rem;border:1px solid #e5e4ea;border-radius:7px;background:#fff;font-size:.7rem}.access-toggle{display:inline-flex;align-items:center;gap:.4rem;border:0;background:transparent;color:#9a5960;font-size:.7rem}.access-toggle span{width:.5rem;height:.5rem;border-radius:50%;background:#cf4b58}.access-toggle.active{color:#168657}.access-toggle.active span{background:#168657}.review-summary{margin:1rem 0;padding:.75rem;border-radius:8px;background:#fafafa;color:#6d6c74;font-size:.75rem}
 </style>
-
 

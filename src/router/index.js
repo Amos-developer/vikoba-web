@@ -11,6 +11,7 @@ import RepaymentsView from "../views/repayments/RepaymentsView.vue";
 import ReportsView from "../views/reports/ReportsView.vue";
 import AccessView from "../views/admin/AccessView.vue";
 import MeetingsView from "../views/meetings/MeetingsView.vue";
+import SocialFundView from "../views/social-fund/SocialFundView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [
@@ -86,6 +87,12 @@ const routes = [
     component: MeetingsView,
     meta: { requiresAuth: true },
   },
+  {
+    path: "/social-fund",
+    name: "SocialFund",
+    component: SocialFundView,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -114,5 +121,4 @@ router.beforeEach((to) => {
 });
 
 export default router;
-
 
