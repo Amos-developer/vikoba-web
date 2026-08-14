@@ -28,7 +28,7 @@ const ownPendingCount = computed(() => approvals.value.filter(
     && Number(item.requested_by) === Number(authStore.user?.userId),
 ).length);
 const roleLabel = (role) => role.charAt(0).toUpperCase() + role.slice(1);
-const actionLabel = (action) => ({ loan_disbursement: "Loan disbursement", withdrawal: "Withdrawal", expense: "Expense", penalty_waiver: "Penalty waiver", social_fund_disbursement: "Social-fund support" }[action] || action);
+const actionLabel = (action) => ({ loan_disbursement: "Loan disbursement", withdrawal: "Withdrawal", expense: "Expense", penalty_waiver: "Penalty waiver", social_fund_disbursement: "Social-fund support", social_fund_contribution: "Social-fund contribution" }[action] || action);
 const currency = (value) => new Intl.NumberFormat("en-TZ", { style: "currency", currency: "TZS", maximumFractionDigits: 0 }).format(value || 0);
 
 const load = async () => {

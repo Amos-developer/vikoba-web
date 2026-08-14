@@ -2,6 +2,8 @@
 import { storeToRefs } from "pinia";
 import { computed, onMounted, ref } from "vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
+import MemberSelect from "../../components/MemberSelect.vue";
+import { getMembers } from "../../services/member.service.js";
 import {
   approveLoan,
   createLoan,
@@ -16,6 +18,7 @@ const { isAdmin } = storeToRefs(authStore);
 
 const loading = ref(false);
 const loans = ref([]);
+const members = ref([]);
 const showModal = ref(false);
 const showDeleteModal = ref(false);
 const isSubmitting = ref(false);
@@ -96,8 +99,9 @@ const loadLoans = async () => {
   loading.value = true;
 
   try {
-    const response = await getLoans();
-    loans.value = response.data?.data || [];
+    const [loansResponse, membersResponse] = await Promise.all([getLoans(), getMembers()]);
+    loans.value = loansResponse.data?.data || [];
+    members.value = membersResponse.data?.data || [];
   } catch (error) {
     console.error("Loans fetch failed:", error);
     formError.value = "Unable to load loans right now.";
@@ -403,14 +407,8 @@ onMounted(loadLoans);
         <form class="mt-3" @submit.prevent="submitLoan">
           <div class="row g-3">
             <div class="col-12 col-md-6">
-              <label class="form-label">Member ID</label>
-              <input
-                v-model="form.member_id"
-                class="form-control"
-                type="number"
-                min="1"
-                required
-              />
+              <label class="form-label">Member</label>
+              <MemberSelect v-model="form.member_id" :members="members" required />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Amount</label>

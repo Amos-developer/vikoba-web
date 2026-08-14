@@ -2,6 +2,8 @@
 import { storeToRefs } from "pinia";
 import { computed, onMounted, ref } from "vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
+import MemberSelect from "../../components/MemberSelect.vue";
+import { getMembers } from "../../services/member.service.js";
 import {
   createSaving,
   deleteSaving,
@@ -12,9 +14,11 @@ import { useAuthStore } from "../../stores/auth.store.js";
 
 const authStore = useAuthStore();
 const { isAdmin } = storeToRefs(authStore);
+const canAddSavings = computed(() => ["admin", "treasurer"].includes(authStore.user?.role));
 
 const loading = ref(false);
 const savings = ref([]);
+const members = ref([]);
 const showModal = ref(false);
 const showDeleteModal = ref(false);
 const isSubmitting = ref(false);
@@ -81,8 +85,9 @@ const loadSavings = async () => {
   loading.value = true;
 
   try {
-    const response = await getSavings();
-    savings.value = response.data?.data || [];
+    const [savingsResponse, membersResponse] = await Promise.all([getSavings(), getMembers()]);
+    savings.value = savingsResponse.data?.data || [];
+    members.value = membersResponse.data?.data || [];
   } catch (error) {
     console.error("Savings fetch failed:", error);
     formError.value = "Unable to load savings records right now.";
@@ -154,7 +159,7 @@ onMounted(loadSavings);
         </p>
       </div>
       <button
-        v-if="isAdmin"
+        v-if="canAddSavings"
         class="btn btn-primary btn-lg shadow-sm"
         @click="openCreateModal"
       >
@@ -324,14 +329,8 @@ onMounted(loadSavings);
         <form class="mt-3" @submit.prevent="submitSaving">
           <div class="row g-3">
             <div class="col-12 col-md-6">
-              <label class="form-label">Member ID</label>
-              <input
-                v-model="form.member_id"
-                class="form-control"
-                type="number"
-                min="1"
-                required
-              />
+              <label class="form-label">Member</label>
+              <MemberSelect v-model="form.member_id" :members="members" required />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Amount</label>
