@@ -7,6 +7,7 @@ import LoansView from "../views/loans/LoansView.vue";
 import MembersView from "../views/Members/MembersView.vue";
 import PenaltiesView from "../views/penalties/PenaltiesView.vue";
 import TransactionsView from "../views/transactions/TransactionsView.vue";
+import RepaymentsView from "../views/repayments/RepaymentsView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [
@@ -56,6 +57,12 @@ const routes = [
     path: "/transactions",
     name: "Transactions",
     component: TransactionsView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/repayments",
+    name: "Repayments",
+    component: RepaymentsView,
     meta: { requiresAuth: true },
   },
 ];
