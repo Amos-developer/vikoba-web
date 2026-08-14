@@ -5,6 +5,7 @@ import LoginView from "../views/auth/LoginView.vue";
 import DashboardView from "../views/dashboard/DashboardView.vue";
 import LoansView from "../views/loans/LoansView.vue";
 import MembersView from "../views/Members/MembersView.vue";
+import PenaltiesView from "../views/penalties/PenaltiesView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [
@@ -44,6 +45,12 @@ const routes = [
     component: LoansView,
     meta: { requiresAuth: true },
   },
+  {
+    path: "/penalties",
+    name: "Penalties",
+    component: PenaltiesView,
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -72,3 +79,5 @@ router.beforeEach((to) => {
 });
 
 export default router;
+
+
