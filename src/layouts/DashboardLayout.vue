@@ -15,6 +15,7 @@ const isCollapsed = ref(false);
 const navItems = [
   { label: "Dashboard", icon: "bi-grid", href: "/", roles: [] },
   { label: "Members", icon: "bi-people", href: "/members", roles: ["chairperson", "secretary"] },
+  { label: "Meetings", icon: "bi-calendar3", href: "/meetings", roles: [] },
   { label: "Savings", icon: "bi-wallet2", href: "/savings", roles: ["treasurer", "secretary"] },
   { label: "Loans", icon: "bi-bank", href: "/loans", roles: ["chairperson", "treasurer"] },
   { label: "Repayments", icon: "bi-arrow-repeat", href: "/repayments", roles: ["treasurer"] },
