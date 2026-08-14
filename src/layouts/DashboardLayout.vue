@@ -20,6 +20,7 @@ const navItems = [
   { label: "Repayments", icon: "bi-arrow-repeat", href: "/repayments" },
   { label: "Penalties", icon: "bi-exclamation-diamond", href: "/penalties" },
   { label: "Transactions", icon: "bi-journal-text", href: "/transactions" },
+  { label: "Reports", icon: "bi-bar-chart", href: "/reports" },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
 const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());

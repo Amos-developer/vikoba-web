@@ -8,6 +8,7 @@ import MembersView from "../views/Members/MembersView.vue";
 import PenaltiesView from "../views/penalties/PenaltiesView.vue";
 import TransactionsView from "../views/transactions/TransactionsView.vue";
 import RepaymentsView from "../views/repayments/RepaymentsView.vue";
+import ReportsView from "../views/reports/ReportsView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
 
 const routes = [
@@ -63,6 +64,12 @@ const routes = [
     path: "/repayments",
     name: "Repayments",
     component: RepaymentsView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/reports",
+    name: "Reports",
+    component: ReportsView,
     meta: { requiresAuth: true },
   },
 ];
