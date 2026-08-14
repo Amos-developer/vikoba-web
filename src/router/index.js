@@ -13,6 +13,9 @@ import AccessView from "../views/admin/AccessView.vue";
 import MeetingsView from "../views/meetings/MeetingsView.vue";
 import SocialFundView from "../views/social-fund/SocialFundView.vue";
 import SavingsView from "../views/savings/SavingsView.vue";
+import CyclesView from "../views/cycles/CyclesView.vue";
+import ExpensesView from "../views/expenses/ExpensesView.vue";
+import ShareoutView from "../views/shareout/ShareoutView.vue";
 
 const routes = [
   {
@@ -45,6 +48,24 @@ const routes = [
     meta: { requiresAuth: true },
   },
 
+  {
+    path: "/share-out",
+    name: "ShareOut",
+    component: ShareoutView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/expenses",
+    name: "Expenses",
+    component: ExpensesView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/cycles",
+    name: "Cycles",
+    component: CyclesView,
+    meta: { requiresAuth: true },
+  },
   {
     path: "/loans",
     name: "Loans",
@@ -121,4 +142,3 @@ router.beforeEach((to) => {
 });
 
 export default router;
-
