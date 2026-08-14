@@ -19,7 +19,10 @@ const filters = ref({ search: "", type: "", direction: "", from: "", to: "" });
 const form = ref({ member_id: "", amount: "", type: "saving", description: "", reference: "" });
 
 const currency = (value) => new Intl.NumberFormat("en-TZ", { style: "currency", currency: "TZS", maximumFractionDigits: 0 }).format(value || 0);
-const typeLabel = (value) => types.find(([key]) => key === value)?.[1] || value;
+const typeLabel = (value) => {
+  if (value === "loan") return "Loan disbursement";
+  return types.find(([key]) => key === value)?.[1] || value;
+};
 const inflow = computed(() => transactions.value.filter((item) => item.direction === "inflow").reduce((sum, item) => sum + Number(item.amount), 0));
 const outflow = computed(() => transactions.value.filter((item) => item.direction === "outflow").reduce((sum, item) => sum + Number(item.amount), 0));
 const requiresMember = computed(() => form.value.type !== "expense");
