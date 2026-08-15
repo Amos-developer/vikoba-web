@@ -1,0 +1,1 @@
+import api from './api';export const getShares=()=>api.get('/shares');export const configureShares=payload=>api.put('/shares/settings',payload);export const purchaseShares=payload=>api.post('/shares/purchases',payload);

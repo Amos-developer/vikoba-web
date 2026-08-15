@@ -17,6 +17,7 @@ const navItems = [
   { label: "Members", icon: "bi-people", href: "/members", roles: ["chairperson", "secretary"] },
   { label: "Meetings", icon: "bi-calendar3", href: "/meetings", roles: [] },
   { label: "Savings", icon: "bi-wallet2", href: "/savings", roles: ["treasurer", "secretary"] },
+  { label: "Shares / Hisa", icon: "bi-stack", href: "/shares", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Social Fund", icon: "bi-heart-pulse", href: "/social-fund", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Loans", icon: "bi-bank", href: "/loans", roles: ["chairperson", "treasurer"] },
   { label: "Repayments", icon: "bi-arrow-repeat", href: "/repayments", roles: ["treasurer"] },
