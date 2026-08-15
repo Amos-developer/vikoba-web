@@ -9,6 +9,7 @@ import {
   updateMember,
 } from "../../services/member.service.js";
 import { useAuthStore } from "../../stores/auth.store.js";
+import { language } from "../../i18n/index.js";
 
 const authStore = useAuthStore();
 const { isAdmin } = storeToRefs(authStore);
@@ -73,7 +74,7 @@ const filteredMembers = computed(() => {
 const formatDate = (value) => {
   if (!value) return "N/A";
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(language.value === "sw" ? "sw-TZ" : "en-TZ", {
     year: "numeric",
     month: "short",
     day: "numeric",
