@@ -17,6 +17,7 @@ import CyclesView from "../views/cycles/CyclesView.vue";
 import ExpensesView from "../views/expenses/ExpensesView.vue";
 import ShareoutView from "../views/shareout/ShareoutView.vue";
 import IncomeView from "../views/income/IncomeView.vue";
+import AuditLogsView from "../views/audit/AuditLogsView.vue";
 
 const routes = [
   {
@@ -49,6 +50,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
 
+  {
+    path: "/audit-logs",
+    name: "AuditLogs",
+    component: AuditLogsView,
+    meta: { requiresAuth: true },
+  },
   {
     path: "/income",
     name: "Income",

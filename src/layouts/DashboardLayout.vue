@@ -28,6 +28,7 @@ const navItems = [
   { label: "Financial Cycles", icon: "bi-calendar2-range", href: "/cycles", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Share-out", icon: "bi-pie-chart", href: "/share-out", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Users & Approvals", icon: "bi-shield-check", href: "/access", roles: ["chairperson", "treasurer", "secretary"] },
+  { label: "Audit Logs", icon: "bi-activity", href: "/audit-logs", roles: ["chairperson", "secretary"] },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
 const visibleNavItems = computed(() => navItems.filter(
