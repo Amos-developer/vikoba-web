@@ -131,14 +131,15 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore();
 
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  const hasValidSession = authStore.validateSession();
+  if (to.meta.requiresAuth && !hasValidSession) {
     return {
       name: "login",
       replace: true,
     };
   }
 
-  if (to.meta.guestOnly && authStore.isAuthenticated) {
+  if (to.meta.guestOnly && hasValidSession) {
     return {
       name: "dashboard",
       replace: true,

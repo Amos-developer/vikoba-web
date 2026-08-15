@@ -20,9 +20,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("session_expires_at");
+      localStorage.removeItem("session_last_activity");
+      window.dispatchEvent(new Event("session-expired"));
 
       if (window.location.pathname !== "/login") {
-        window.location.replace("/login");
+        window.location.replace("/login?reason=session_expired");
       }
     }
 

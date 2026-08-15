@@ -37,10 +37,7 @@ const visibleNavItems = computed(() => navItems.filter(
 ));
 const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());
 const closeSidebar = () => (isOpen.value = false);
-const handleLogout = () => {
-  authStore.logout();
-  router.replace("/login");
-};
+const handleLogout = async () => { await authStore.logout(); };
 </script>
 
 <template>
