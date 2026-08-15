@@ -29,7 +29,7 @@ const navItems = [
   { label: "Share-out", icon: "bi-pie-chart", href: "/share-out", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Reports", icon: "bi-bar-chart", href: "/reports", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Users & Approvals", icon: "bi-shield-check", href: "/access", roles: ["chairperson", "treasurer", "secretary"] },
-  { label: "Audit Logs", icon: "bi-activity", href: "/audit-logs", roles: ["chairperson", "secretary"] },
+  { label: "Audit Logs", icon: "bi-activity", href: "/audit-logs", roles: ["chairperson", "treasurer", "secretary"] },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
 const visibleNavItems = computed(() => navItems.filter(
@@ -145,6 +145,7 @@ const handleLogout = async () => { await authStore.logout(); };
   padding-right: .2rem;
   scrollbar-color: #d9d5e8 transparent;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 
 .sidebar nav::-webkit-scrollbar {

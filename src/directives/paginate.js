@@ -16,7 +16,34 @@ const render = (tbody, binding) => {
   if (!state) return;
 
   const pageSize = Number(binding.value?.pageSize || binding.value || 10);
+  const table = tbody.closest("table");
+  const headerRow = table?.tHead?.rows?.[0];
+  if (headerRow && !headerRow.querySelector(".table-row-number-heading")) {
+    const heading = document.createElement("th");
+    heading.className = "table-row-number-heading";
+    heading.scope = "col";
+    heading.textContent = "No.";
+    headerRow.prepend(heading);
+  }
+
   const rows = getDataRows(tbody);
+  rows.forEach((row, index) => {
+    let numberCell = row.querySelector(":scope > .table-row-number");
+    if (!numberCell) {
+      numberCell = document.createElement("td");
+      numberCell.className = "table-row-number";
+      row.prepend(numberCell);
+    }
+    const number = String(index + 1);
+    if (numberCell.textContent !== number) numberCell.textContent = number;
+  });
+  Array.from(tbody.rows).filter((row) => row.querySelector("td[colspan]")).forEach((row) => {
+    const cell = row.querySelector("td[colspan]");
+    if (!cell.dataset.paginationColspanAdjusted) {
+      cell.colSpan += 1;
+      cell.dataset.paginationColspanAdjusted = "true";
+    }
+  });
   const signature = rows.map((row) => row.textContent.trim()).join("|");
 
   if (state.signature !== signature) {
