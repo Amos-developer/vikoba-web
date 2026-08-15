@@ -2,6 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useAuthStore } from "../stores/auth.store";
+import { updateLanguage } from "../services/auth.service.js";
+import { language, setLanguage } from "../i18n/index.js";
 
 defineProps({
   pageTitle: { type: String, default: "Dashboard" },
@@ -42,6 +44,14 @@ const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());
 const isActive = (href) => route.path === href || (href !== "/" && route.path.startsWith(`${href}/`));
 const closeSidebar = () => (isOpen.value = false);
 const handleLogout = async () => { await authStore.logout(); };
+const changeLanguage = async (event) => {
+  const selected = event.target.value;
+  setLanguage(selected);
+  authStore.language = selected;
+  if (authStore.user) authStore.user.language = selected;
+  localStorage.setItem("user", JSON.stringify(authStore.user));
+  try { await updateLanguage(selected); } catch { /* Local choice remains available while offline. */ }
+};
 watch(isCollapsed, (value) => localStorage.setItem("sidebar_collapsed", String(value)));
 onMounted(() => nextTick(() => {
   if (!navElement.value) return;
@@ -85,6 +95,7 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
             <div><span>{{ pageSubtitle }}</span><h1>{{ pageTitle }}</h1></div>
           </div>
           <div class="top-actions">
+            <label class="top-language"><i class="bi bi-globe2"></i><select :value="language" aria-label="Language" @change="changeLanguage"><option value="en">EN</option><option value="sw">SW</option></select></label>
             <span class="refresh-note">Auto-refreshing</span>
             <button type="button" @click="$router.go(0)"><i class="bi bi-arrow-repeat"></i><span>Refresh</span></button>
           </div>
@@ -202,6 +213,8 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
     margin-left: 72px;
   }
 }
+
+.top-language{height:2.2rem;display:flex;align-items:center;gap:.25rem;padding:0 .45rem;border:1px solid #e5e4ea;border-radius:8px;background:#fff;color:#7659e8}.top-language select{border:0;outline:0;background:transparent;color:#4f4a56;font-size:.67rem;font-weight:700}
 
 /* A strong, persistent route indicator keeps navigation context obvious. */
 .sidebar nav a:hover {
