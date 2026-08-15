@@ -5,6 +5,7 @@ import AuthLayout from "../../layouts/AuthLayout.vue";
 import { startTrial } from "../../services/billing.service.js";
 import { useAuthStore } from "../../stores/auth.store.js";
 import { language,setLanguage } from "../../i18n/index.js";
+import "./trial-onboarding.css";
 
 const router=useRouter();const auth=useAuthStore();const loading=ref(false);const errorMessage=ref("");const showPassword=ref(false);
 const form=ref({group_name:"",name:"",email:"",phone:"",password:""});

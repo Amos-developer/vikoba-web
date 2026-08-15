@@ -1,0 +1,214 @@
+.onboarding-page,
+.onboarding-page *,
+.onboarding-page *::before,
+.onboarding-page *::after {
+  box-sizing: border-box;
+}
+
+.onboarding-page {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.onboarding-page .onboarding-shell,
+.onboarding-page .form-panel,
+.onboarding-page .form-wrap,
+.onboarding-page form,
+.onboarding-page fieldset,
+.onboarding-page label,
+.onboarding-page .input-wrap {
+  min-width: 0;
+}
+
+.onboarding-page .form-wrap {
+  width: 100% !important;
+}
+
+.onboarding-page .form-heading h2,
+.onboarding-page .value-content h1 {
+  overflow-wrap: anywhere;
+}
+
+.onboarding-page .eyebrow,
+.onboarding-page .form-heading > span {
+  display: block;
+}
+
+.onboarding-page .form-heading p,
+.onboarding-page .value-content > p {
+  font-size: .82rem;
+}
+
+.onboarding-page form label,
+.onboarding-page legend {
+  font-size: .76rem;
+}
+
+.onboarding-page .input-wrap input,
+.onboarding-page .submit-button {
+  font-size: .8rem;
+}
+
+.onboarding-page form label > small,
+.onboarding-page .terms {
+  font-size: .64rem;
+}
+
+@media (max-width: 959px) {
+  .onboarding-page .topbar {
+    gap: .75rem;
+  }
+
+  .onboarding-page .top-actions > span,
+  .onboarding-page .top-actions > a {
+    display: none;
+  }
+
+  .onboarding-page .onboarding-shell {
+    width: 100%;
+  }
+
+  .onboarding-page .value-panel {
+    display: block !important;
+    padding: 2.25rem 1.25rem 2rem !important;
+  }
+
+  .onboarding-page .value-panel::before {
+    width: 230px;
+    height: 230px;
+    right: -105px;
+    top: -105px;
+  }
+
+  .onboarding-page .back-link {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .onboarding-page .value-content h1 {
+    max-width: 540px;
+    margin: .65rem 0 .8rem;
+    font-size: clamp(2rem, 10vw, 3rem) !important;
+    line-height: 1.02;
+  }
+
+  .onboarding-page .value-content > p {
+    max-width: 600px;
+    margin-bottom: 0;
+  }
+
+  .onboarding-page .benefits,
+  .onboarding-page .trust-card {
+    display: none !important;
+  }
+
+  .onboarding-page .form-panel {
+    width: 100%;
+    padding: 1rem !important;
+  }
+
+  .onboarding-page .form-wrap {
+    padding: 1.25rem !important;
+    border-radius: 14px;
+  }
+
+  .onboarding-page .form-heading h2 {
+    font-size: clamp(1.65rem, 7vw, 2.1rem);
+    line-height: 1.08;
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding-page .topbar {
+    min-height: 62px;
+    padding: .65rem .85rem;
+  }
+
+  .onboarding-page .brand small,
+  .onboarding-page .top-actions > i {
+    display: none;
+  }
+
+  .onboarding-page .value-panel {
+    padding: 1.8rem 1rem !important;
+  }
+
+  .onboarding-page .value-content h1 {
+    font-size: 2rem !important;
+  }
+
+  .onboarding-page .value-content > p {
+    font-size: .72rem;
+    line-height: 1.6;
+  }
+
+  .onboarding-page .form-panel {
+    padding: .75rem !important;
+  }
+
+  .onboarding-page .form-wrap {
+    padding: 1rem !important;
+  }
+
+  .onboarding-page .step-row {
+    align-items: flex-end;
+  }
+
+  .onboarding-page .progress-track {
+    width: 70px;
+  }
+
+  .onboarding-page .two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-page .input-wrap {
+    width: 100%;
+  }
+}
+
+@media (min-width: 960px) {
+  .onboarding-page .onboarding-shell {
+    width: min(1280px, 100%);
+    grid-template-columns: minmax(400px, .88fr) minmax(560px, 1.12fr);
+  }
+
+  .onboarding-page .value-panel {
+    min-height: calc(100dvh - 68px);
+  }
+
+  .onboarding-page .form-panel {
+    min-height: calc(100dvh - 68px);
+  }
+
+  .onboarding-page .form-wrap {
+    max-width: 620px;
+    padding: 1.75rem !important;
+    border: 1px solid #e7e2eb !important;
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgba(38, 27, 60, .08) !important;
+  }
+
+  .onboarding-page .value-content h1 {
+    max-width: 520px;
+    font-size: clamp(2.5rem, 3.7vw, 3.45rem) !important;
+    line-height: 1.04;
+  }
+
+  .onboarding-page .back-link {
+    display: flex;
+    width: max-content;
+    margin-bottom: 3rem !important;
+  }
+
+  .onboarding-page .benefits {
+    margin-top: 2.5rem;
+  }
+
+  .onboarding-page .benefits strong {
+    font-size: .76rem;
+  }
+
+  .onboarding-page .benefits small {
+    font-size: .65rem;
+  }
+}
