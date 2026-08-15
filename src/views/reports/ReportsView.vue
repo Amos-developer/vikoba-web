@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
 import { getMembers } from "../../services/member.service.js";
 import { getReports } from "../../services/report.service.js";
+import { language } from "../../i18n/index.js";
 
 const tabs = [
   ["memberStatement", "Member statement"], ["savings", "Savings"],
@@ -17,7 +18,9 @@ const members = ref([]);
 const filters = ref({ member_id: "", from: "", to: "" });
 const report = ref({ memberStatement: [], savings: [], outstandingLoans: [], repayments: [], incomeExpense: [], socialFund: [], cashPosition: {}, endOfCycle: {} });
 const currency = (value) => new Intl.NumberFormat("en-TZ", { style: "currency", currency: "TZS", maximumFractionDigits: 0 }).format(value || 0);
-const date = (value) => value ? new Date(value).toLocaleDateString() : "â€”";
+const date = (value) => value
+  ? new Date(value).toLocaleDateString(language.value === "sw" ? "sw-TZ" : "en-TZ")
+  : "—";
 const movementName = (value) => ({ saving: "Saving", loan_disbursement: "Loan disbursement", repayment: "Repayment", withdrawal: "Withdrawal", fine: "Fine", social_fund: "Social fund", expense: "Expense" }[value] || value);
 const activeRows = computed(() => Array.isArray(report.value[activeTab.value]) ? report.value[activeTab.value] : []);
 
@@ -64,5 +67,4 @@ onMounted(load);
 <style scoped>
 .header-actions{display:flex;gap:.5rem}.filter-panel{margin-bottom:1rem}.report-filters{display:grid;gap:.65rem}.report-filters>div label{display:block;margin-bottom:.3rem;color:#73727b;font-size:.68rem;font-weight:600}.report-filters .btn{align-self:end}.report-tabs{display:flex;gap:.35rem;margin-bottom:1rem;padding:.35rem;overflow-x:auto;border:1px solid #ececf1;border-radius:11px;background:#fff}.report-tabs button{flex:0 0 auto;padding:.55rem .75rem;border:0;border-radius:7px;background:transparent;color:#74737c;font-size:.7rem}.report-tabs button.active{background:#7659e8;color:#fff}.report-sheet{min-height:340px}.report-title{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;padding-bottom:1rem;border-bottom:1px solid #ececf1}.report-title span,.report-title small{color:#8e8d96;font-size:.68rem}.report-title h3{margin:.15rem 0 0;font-size:1.05rem}.report-table{min-width:680px;font-size:.73rem}.summary-grid{display:grid;gap:.75rem;margin-top:1rem}.summary-grid article{padding:1rem;border:1px solid #ececf1;border-radius:10px}.summary-grid span,.summary-grid strong{display:block}.summary-grid span{color:#85848d;font-size:.7rem}.summary-grid strong{margin-top:.5rem;font-size:1.2rem}.summary-grid .highlight{border-color:#dcd4ff;background:#f7f5ff}.positive{color:#168657!important}.negative{color:#cf4b58!important}.report-empty{padding:3rem;text-align:center;color:#8d8c95;font-size:.78rem}@media(min-width:768px){.report-filters{grid-template-columns:minmax(190px,1.3fr) repeat(2,minmax(140px,.8fr)) auto auto}.summary-grid{grid-template-columns:repeat(3,1fr)}.cycle-grid{grid-template-columns:repeat(4,1fr)}}@media print{.no-print{display:none!important}.report-sheet{border:0!important;box-shadow:none!important}.report-title{margin-bottom:1rem}}
 </style>
-
 
