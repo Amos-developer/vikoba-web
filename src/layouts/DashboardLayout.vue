@@ -1,6 +1,6 @@
 <script setup>
-import { computed, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useAuthStore } from "../stores/auth.store";
 
 defineProps({
@@ -8,10 +8,11 @@ defineProps({
   pageSubtitle: { type: String, default: "Overview" },
 });
 
-const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const isOpen = ref(false);
-const isCollapsed = ref(false);
+const isCollapsed = ref(localStorage.getItem("sidebar_collapsed") === "true");
+const navElement = ref(null);
 const navItems = [
   { label: "Dashboard", icon: "bi-grid", href: "/", roles: [] },
   { label: "Members", icon: "bi-people", href: "/members", roles: ["chairperson", "secretary"] },
@@ -38,8 +39,16 @@ const visibleNavItems = computed(() => navItems.filter(
     || item.roles.includes(userRole.value.toLowerCase()),
 ));
 const userInitial = computed(() => userRole.value.charAt(0).toUpperCase());
+const isActive = (href) => route.path === href || (href !== "/" && route.path.startsWith(`${href}/`));
 const closeSidebar = () => (isOpen.value = false);
 const handleLogout = async () => { await authStore.logout(); };
+watch(isCollapsed, (value) => localStorage.setItem("sidebar_collapsed", String(value)));
+onMounted(() => nextTick(() => {
+  if (!navElement.value) return;
+  navElement.value.scrollTop = Number(sessionStorage.getItem("sidebar_scroll") || 0);
+  navElement.value.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
+}));
+onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement.value?.scrollTop || 0)));
 </script>
 
 <template>
@@ -53,8 +62,8 @@ const handleLogout = async () => { await authStore.logout(); };
         </div>
         <label class="sidebar-search"><i class="bi bi-search"></i><input type="search" placeholder="Search..." /></label>
         <span class="nav-label">Workspace</span>
-        <nav aria-label="Main navigation">
-          <router-link v-for="item in visibleNavItems" :key="item.href" :to="item.href" :class="{ active: $route.path === item.href }" @click="closeSidebar">
+        <nav ref="navElement" aria-label="Main navigation">
+          <router-link v-for="item in visibleNavItems" :key="item.href" :to="item.href" :class="{ active: isActive(item.href) }" :aria-current="isActive(item.href) ? 'page' : undefined" @click="closeSidebar">
             <i class="bi" :class="item.icon"></i><span>{{ item.label }}</span>
           </router-link>
         </nav>
@@ -192,5 +201,24 @@ const handleLogout = async () => { await authStore.logout(); };
   .collapsed .main-panel {
     margin-left: 72px;
   }
+}
+
+/* A strong, persistent route indicator keeps navigation context obvious. */
+.sidebar nav a:hover {
+  background: #f5f3fc;
+  color: #3f394c;
+}
+
+.sidebar nav a.active,
+.sidebar nav a[aria-current="page"] {
+  background: #eeeaff;
+  color: #6047c9;
+  box-shadow: inset 3px 0 #7659e8;
+  font-weight: 700;
+}
+
+.sidebar nav a.active i,
+.sidebar nav a[aria-current="page"] i {
+  color: #7659e8;
 }
 </style>
