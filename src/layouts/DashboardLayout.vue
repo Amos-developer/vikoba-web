@@ -38,6 +38,7 @@ const navItems = [
   { label: "Plans & Billing", icon: "bi-credit-card", href: "/billing", roles: [] },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
+const groupName = computed(() => authStore.organization?.name || "Vikoba Group");
 const visibleNavItems = computed(() => navItems.filter(
   (item) => userRole.value.toLowerCase() === "admin"
     || !item.roles.length
@@ -72,7 +73,7 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
       <aside class="sidebar" :class="{ open: isOpen }">
         <div class="brand">
           <span class="brand-mark">V</span>
-          <div><strong>Vikoba</strong><small>Management Platform</small></div>
+          <div class="brand-copy"><strong>Vikoba</strong><small :title="groupName">{{ groupName }}</small></div>
         </div>
         <label class="sidebar-search"><i class="bi bi-search"></i><input type="search" placeholder="Search..." /></label>
         <span class="nav-label">Workspace</span>
@@ -96,7 +97,7 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
           <div class="heading-group">
             <button class="mobile-menu" type="button" aria-label="Open menu" @click="isOpen = true"><i class="bi bi-list"></i></button>
             <button class="collapse-menu" type="button" aria-label="Collapse sidebar" @click="isCollapsed = !isCollapsed"><i class="bi" :class="isCollapsed ? 'bi-layout-sidebar-inset' : 'bi-layout-sidebar'"></i></button>
-            <div><span>{{ pageSubtitle }}</span><h1>{{ pageTitle }}</h1></div>
+            <div class="page-heading"><span><strong :title="groupName">{{ groupName }}</strong><i></i>{{ pageSubtitle }}</span><h1>{{ pageTitle }}</h1></div>
           </div>
           <div class="top-actions">
             <label class="top-language"><i class="bi bi-globe2"></i><select :value="language" aria-label="Language" @change="changeLanguage"><option value="en">EN</option><option value="sw">SW</option></select></label>
@@ -138,6 +139,8 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
 .sidebar {
   background: #ffffff;
 }
+
+.brand-copy,.page-heading{min-width:0}.brand-copy small{max-width:165px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#7056d8;font-weight:650}.page-heading>span{display:flex!important;align-items:center;gap:.4rem}.page-heading>span strong{max-width:min(34vw,260px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6552ad;font-size:inherit}.page-heading>span i{width:3px;height:3px;flex:none;border-radius:50%;background:#b7b2bc}
 
 @media (min-width: 600px) {
   .viewport-frame {
