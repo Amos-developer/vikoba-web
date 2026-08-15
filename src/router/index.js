@@ -19,6 +19,9 @@ import ShareoutView from "../views/shareout/ShareoutView.vue";
 import IncomeView from "../views/income/IncomeView.vue";
 import AuditLogsView from "../views/audit/AuditLogsView.vue";
 import SharesView from "../views/shares/SharesView.vue";
+import BillingView from "../views/billing/BillingView.vue";
+import TrialSignupView from "../views/auth/TrialSignupView.vue";
+import SignInView from "../views/auth/SignInView.vue";
 
 const routes = [
   {
@@ -57,6 +60,8 @@ const routes = [
     component: SharesView,
     meta: { requiresAuth: true },
   },
+  { path:"/sign-in",name:"signIn",component:SignInView,meta:{guestOnly:true} },
+  { path:"/start-trial",name:"startTrial",component:TrialSignupView,meta:{guestOnly:true} },
   {
     path: "/audit-logs",
     name: "AuditLogs",
@@ -135,6 +140,7 @@ const routes = [
     component: SocialFundView,
     meta: { requiresAuth: true },
   },
+  { path:"/billing",name:"Billing",component:BillingView,meta:{requiresAuth:true} },
 ];
 
 const router = createRouter({
@@ -148,7 +154,7 @@ router.beforeEach((to) => {
   const hasValidSession = authStore.validateSession();
   if (to.meta.requiresAuth && !hasValidSession) {
     return {
-      name: "login",
+      name: "signIn",
       replace: true,
     };
   }

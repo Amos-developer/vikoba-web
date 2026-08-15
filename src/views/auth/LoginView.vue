@@ -1,95 +1,59 @@
 <script setup>
-import { computed, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { computed, onMounted, ref } from "vue";
 import AuthLayout from "../../layouts/AuthLayout.vue";
-import { login } from "../../services/auth.service";
-import { useAuthStore } from "../../stores/auth.store";
 import { language, setLanguage } from "../../i18n/index.js";
+import { getPlans } from "../../services/billing.service.js";
 
-const email = ref("");
-const password = ref("");
-const showPassword = ref(false);
-const loading = ref(false);
-const errorMessage = ref("");
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
-const sessionMessage = computed(() => ({
-  expired: "Your session expired. Sign in again to continue.",
-  inactive: "You were signed out after a period of inactivity.",
-  session_expired: "Your session ended. Sign in again to continue.",
-  signed_out: "You have been signed out securely.",
-}[route.query.reason] || ""));
+const plans = ref([]);
+const annualBilling = ref(false);
+const visiblePlans = computed(() => plans.value.filter((plan) =>
+  plan.billing_interval === (annualBilling.value ? "year" : "month"),
+));
+const money = (value) => new Intl.NumberFormat("en-TZ", {
+  style: "currency", currency: "TZS", maximumFractionDigits: 0,
+}).format(value || 0);
 
-const handleLogin = async () => {
-  if (!email.value || !password.value) {
-    errorMessage.value = "Enter your email address and password.";
-    return;
-  }
-  try {
-    loading.value = true;
-    errorMessage.value = "";
-    const response = await login({ email: email.value, password: password.value, language: language.value });
-    authStore.setAuth(response.data.token, response.data.language);
-    setLanguage(response.data.language);
-    await router.replace("/");
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message || "The email or password is incorrect.";
-  } finally {
-    loading.value = false;
-  }
-};
+onMounted(async () => {
+  try { plans.value = (await getPlans()).data.data || []; } catch { plans.value = []; }
+});
 </script>
 
 <template>
   <AuthLayout>
-    <main class="auth-page">
-      <section class="auth-shell">
-        <aside class="welcome-panel">
-          <div class="brand"><span>V</span><div><strong>Vikoba</strong><small>Group Finance Platform</small></div></div>
-          <div class="welcome-copy">
-            <span class="eyebrow">Built for accountable groups</span>
-            <h1>One clear view of your group finances.</h1>
-            <p>Manage savings, loans, repayments, meetings, and approvals from a secure shared workspace.</p>
-          </div>
-          <div class="feature-list">
-            <div><i class="bi bi-shield-check"></i><span><strong>Controlled access</strong><small>Role-based permissions and approvals</small></span></div>
-            <div><i class="bi bi-journal-check"></i><span><strong>Complete audit trail</strong><small>Every financial movement stays traceable</small></span></div>
-          </div>
-          <p class="welcome-footer"><i class="bi bi-lock-fill"></i> Secure group administration</p>
-        </aside>
+    <main class="website-page">
+      <nav class="site-nav">
+        <a class="site-brand" href="#top"><span>V</span><div><strong>Vikoba</strong><small>Group Finance Platform</small></div></a>
+        <div class="nav-links"><a href="#services">Services</a><a href="#about">About</a><a href="#how-it-works">How it works</a><a href="#pricing">Plans</a></div>
+        <div class="nav-actions">
+          <label class="nav-language"><i class="bi bi-globe2"></i><select :value="language" aria-label="Language" @change="setLanguage($event.target.value)"><option value="en">English</option><option value="sw">Kiswahili</option></select></label>
+          <router-link class="nav-signin" to="/sign-in">Sign in</router-link><router-link class="nav-cta" to="/start-trial">Get started</router-link>
+        </div>
+      </nav>
 
-        <section class="form-panel">
-          <label class="language-picker">
-            <i class="bi bi-globe2"></i>
-            <span>Language</span>
-            <select :value="language" aria-label="Language" @change="setLanguage($event.target.value)">
-              <option value="en">English</option>
-              <option value="sw">Kiswahili</option>
-            </select>
-          </label>
-          <div class="mobile-brand"><span>V</span><div><strong>Vikoba</strong><small>Group Finance Platform</small></div></div>
-          <div class="form-heading"><span>Welcome back</span><h2>Sign in to your account</h2><p>Enter your account details to continue.</p></div>
-
-          <form @submit.prevent="handleLogin">
-            <div v-if="sessionMessage" class="session-message" role="status"><i class="bi bi-info-circle"></i><span>{{ sessionMessage }}</span></div>
-            <div v-if="errorMessage" class="alert-message" role="alert"><i class="bi bi-exclamation-circle"></i><span>{{ errorMessage }}</span></div>
-
-            <label class="field-group" for="email">
-              <span>Email address</span>
-              <div class="input-wrap"><i class="bi bi-envelope"></i><input id="email" v-model.trim="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required autofocus /></div>
-            </label>
-
-            <label class="field-group" for="password">
-              <span>Password</span>
-              <div class="input-wrap"><i class="bi bi-lock"></i><input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" placeholder="Enter your password" required /><button type="button" :aria-label="showPassword ? 'Hide password' : 'Show password'" @click="showPassword=!showPassword"><i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i></button></div>
-            </label>
-
-            <button class="submit-button" type="submit" :disabled="loading"><span v-if="loading" class="spinner-border spinner-border-sm"></span><span>{{ loading ? "Signing in..." : "Sign in" }}</span><i v-if="!loading" class="bi bi-arrow-right"></i></button>
-          </form>
-          <p class="support-note">Having trouble signing in? Contact your group administrator.</p>
-        </section>
+      <section id="top" class="hero-section">
+        <div class="hero-copy">
+          <span class="hero-label"><i class="bi bi-stars"></i> Built for modern savings groups</span>
+          <h1>Run your VICOBA with clarity, trust, and control.</h1>
+          <p>Manage members, savings, shares, loans, meetings, approvals, reports, and cycle share-outs in one secure platform.</p>
+          <div class="hero-actions"><router-link class="primary-cta" to="/start-trial">Start 7-day free trial <i class="bi bi-arrow-right"></i></router-link><a class="secondary-cta" href="#pricing">View plans</a></div>
+          <div class="hero-trust"><span><i class="bi bi-check-circle-fill"></i> No card required</span><span><i class="bi bi-check-circle-fill"></i> Full access for 7 days</span><span><i class="bi bi-check-circle-fill"></i> Your records stay available</span></div>
+        </div>
+        <div class="hero-preview">
+          <div class="preview-top"><span><i></i><i></i><i></i></span><small>Vikoba overview</small></div>
+          <div class="preview-grid"><article><i class="bi bi-people"></i><span>Active members</span><strong>128</strong><small>+12 this cycle</small></article><article><i class="bi bi-wallet2"></i><span>Total savings</span><strong>TZS 18.4M</strong><small>Securely tracked</small></article><article><i class="bi bi-cash-stack"></i><span>Loan portfolio</span><strong>TZS 7.2M</strong><small>94% repaid on time</small></article><article><i class="bi bi-shield-check"></i><span>Pending approvals</span><strong>4</strong><small>Two-person control</small></article></div>
+          <div class="preview-activity"><div><span>Recent activity</span><small>Live audit trail</small></div><p><i class="bi bi-arrow-down-left"></i><span>Saving contribution<small>Amina Juma · today</small></span><strong>+ 50,000</strong></p><p><i class="bi bi-arrow-up-right"></i><span>Loan disbursement<small>Approved by Treasurer</small></span><strong>- 400,000</strong></p></div>
+        </div>
       </section>
+
+      <section id="services" class="features-section"><div class="section-heading"><span>Our services</span><h2>Everything your savings group needs</h2><p>Financial controls, daily operations, and end-of-cycle reporting stay connected.</p></div><div class="feature-grid"><article><i class="bi bi-bank"></i><h3>Financial management</h3><p>Savings, shares, loans, repayments, penalties, expenses, income, and social funds.</p></article><article><i class="bi bi-person-check"></i><h3>Roles and approvals</h3><p>Separate duties between Admin, Chairperson, Treasurer, Secretary, and Members.</p></article><article><i class="bi bi-journal-text"></i><h3>Reports and audit trail</h3><p>Know who created, changed, approved, or reversed every sensitive transaction.</p></article><article><i class="bi bi-calendar2-check"></i><h3>Cycles and share-out</h3><p>Close financial periods and distribute savings and realized profit fairly.</p></article></div></section>
+
+      <section id="about" class="about-section"><div class="about-visual"><div class="about-mark"><i class="bi bi-people-fill"></i></div><div><strong>One trusted record</strong><span>for every member and every shilling</span></div></div><div class="about-copy"><span>About Vikoba</span><h2>Technology built for transparent group finance.</h2><p>Vikoba replaces scattered notebooks and spreadsheets with one reliable workspace. Leaders get the controls they need, while members benefit from accurate records and accountable decisions.</p><div><span><strong>100%</strong><small>Traceable financial movements</small></span><span><strong>24/7</strong><small>Secure record availability</small></span></div></div></section>
+
+      <section id="how-it-works" class="how-section"><div class="section-heading"><span>How it works</span><h2>Start managing your group in three steps</h2><p>No complicated setup and no payment card required for your trial.</p></div><div class="steps"><article><span>01</span><i class="bi bi-building-add"></i><h3>Create your workspace</h3><p>Enter your group and administrator details to start a secure seven-day trial.</p></article><article><span>02</span><i class="bi bi-person-plus"></i><h3>Add members and roles</h3><p>Invite your team and assign the right responsibilities and approval permissions.</p></article><article><span>03</span><i class="bi bi-graph-up-arrow"></i><h3>Run with confidence</h3><p>Record daily activity, approve sensitive actions, and produce reliable reports.</p></article></div><router-link class="primary-cta how-cta" to="/start-trial">Get started free <i class="bi bi-arrow-right"></i></router-link></section>
+
+      <section id="pricing" class="pricing-section"><div class="section-heading"><span>Simple pricing</span><h2>Choose a plan that grows with your group</h2><p>Start with every feature free for seven days. Choose a paid plan when you are ready.</p></div><div class="billing-toggle"><button :class="{active:!annualBilling}" @click="annualBilling=false">Monthly</button><button :class="{active:annualBilling}" @click="annualBilling=true">Yearly <small>Save 2 months</small></button></div><div v-if="visiblePlans.length" class="public-plans"><article v-for="(plan,index) in visiblePlans" :key="plan.id" :class="{featured:index===1}"><span v-if="index===1" class="popular">Most popular</span><h3>{{ plan.name }}</h3><p>{{ plan.description }}</p><strong>{{ money(plan.price_tzs) }}<small>/{{ plan.billing_interval }}</small></strong><ul><li><i class="bi bi-check2"></i>{{ plan.member_limit ? `Up to ${plan.member_limit} members` : "Unlimited members" }}</li><li><i class="bi bi-check2"></i>Financial reports and exports</li><li><i class="bi bi-check2"></i>Roles, approvals, and audit logs</li><li><i class="bi bi-check2"></i>Secure cloud workspace</li></ul><router-link to="/start-trial">Get started free</router-link></article></div><div v-else class="plans-loading">Plans are loading. You can still start your free trial.</div></section>
+
+      <footer><div class="site-brand"><span>V</span><div><strong>Vikoba</strong><small>Group Finance Platform</small></div></div><p>Secure and accountable financial management for savings groups.</p><span>© {{ new Date().getFullYear() }} Vikoba</span></footer>
     </main>
   </AuthLayout>
 </template>
@@ -101,4 +65,17 @@ const handleLogin = async () => {
 @media(min-width:900px){.auth-shell{max-width:1080px;grid-template-columns:minmax(0,1.08fr) minmax(380px,.92fr);min-height:650px}.welcome-panel{position:relative;display:flex;flex-direction:column;padding:2.4rem;overflow:hidden;background:linear-gradient(145deg,#292039,#4d368d 60%,#7052d7);color:#fff}.welcome-panel::before,.welcome-panel::after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.1)}.welcome-panel::before{width:380px;height:380px;right:-180px;top:-130px}.welcome-panel::after{width:290px;height:290px;left:-150px;bottom:-120px}.brand,.welcome-copy,.feature-list,.welcome-footer{position:relative;z-index:1}.brand small{color:rgba(255,255,255,.56)}.welcome-copy{margin:auto 0 2.2rem}.welcome-copy .eyebrow{color:#c8baf9}.welcome-copy h1{max-width:520px;margin:.65rem 0 1rem;font-size:clamp(2.7rem,4vw,4rem);line-height:1.02;letter-spacing:-.055em}.welcome-copy p{max-width:480px;margin:0;color:rgba(255,255,255,.7);font-size:.95rem;line-height:1.7}.feature-list{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem}.feature-list>div{display:flex;gap:.7rem;padding:.85rem;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:rgba(255,255,255,.07)}.feature-list i{color:#cdbfff}.feature-list span,.feature-list strong,.feature-list small{display:block}.feature-list strong{font-size:.74rem}.feature-list small{margin-top:.2rem;color:rgba(255,255,255,.55);font-size:.62rem;line-height:1.4}.welcome-footer{display:flex;align-items:center;gap:.4rem;margin:1.2rem 0 0;color:rgba(255,255,255,.48);font-size:.62rem}.form-panel{display:flex;flex-direction:column;justify-content:center;padding:clamp(2.5rem,5vw,4.4rem)}.mobile-brand{display:none}.form-heading{margin:0 0 2rem}.support-note{margin-top:2rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<style scoped>
+.site-nav{isolation:isolate;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(110deg,rgba(32,24,43,.97),rgba(68,46,112,.96) 58%,rgba(106,78,205,.95));box-shadow:0 10px 35px rgba(35,25,58,.18);color:#fff}.site-nav::before{content:"";position:absolute;z-index:-1;inset:0;overflow:hidden;background:radial-gradient(circle at 15% -70%,rgba(184,165,255,.5),transparent 38%),radial-gradient(circle at 85% 180%,rgba(150,123,255,.36),transparent 34%);animation:headerGlow 8s ease-in-out infinite alternate}.site-nav .site-brand,.site-nav .nav-links a,.site-nav .nav-signin{color:#fff}.site-nav .site-brand small{color:rgba(255,255,255,.58)}.site-nav .nav-links a,.site-nav .nav-signin{position:relative;opacity:.78;transition:opacity .2s ease,transform .2s ease}.site-nav .nav-links a::after,.site-nav .nav-signin::after{content:"";position:absolute;left:0;right:100%;bottom:-.45rem;height:2px;border-radius:2px;background:#cbbcff;transition:right .25s ease}.site-nav .nav-links a:hover,.site-nav .nav-signin:hover{opacity:1;transform:translateY(-1px)}.site-nav .nav-links a:hover::after,.site-nav .nav-signin:hover::after{right:0}.site-nav .nav-language,.site-nav .nav-language select{color:rgba(255,255,255,.82)}.site-nav .nav-language select{background:#3c2d5d}.site-nav .nav-cta{border:1px solid rgba(255,255,255,.24);background:#fff;color:#5439b4;box-shadow:0 8px 20px rgba(22,14,38,.22);transition:transform .2s ease,box-shadow .2s ease}.site-nav .nav-cta:hover{transform:translateY(-2px);box-shadow:0 12px 27px rgba(22,14,38,.3)}
+.hero-copy{animation:fadeUp .7s ease both}.hero-preview{position:relative;animation:previewIn .85s .12s cubic-bezier(.2,.75,.25,1) both}.hero-label{display:inline-flex;align-items:center;gap:.35rem;padding:.38rem .65rem;border:1px solid #e1d9fb;border-radius:99px;background:#f4f0ff}.hero-preview::after{content:"";position:absolute;z-index:-1;inset:8% -5% -7% 8%;border-radius:24px;background:linear-gradient(135deg,rgba(113,82,218,.2),rgba(79,182,155,.12));filter:blur(28px);animation:previewGlow 5s ease-in-out infinite alternate}.feature-grid article,.steps article,.public-plans article{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}.feature-grid article:hover,.steps article:hover,.public-plans article:hover{transform:translateY(-6px);border-color:#cfc2f4;box-shadow:0 18px 40px rgba(59,42,101,.1)}.feature-grid article>i,.steps article>i{transition:transform .25s ease,background .25s ease,color .25s ease}.feature-grid article:hover>i,.steps article:hover>i{transform:rotate(-5deg) scale(1.08);background:#7053dc;color:#fff}.primary-cta{transition:transform .2s ease,box-shadow .2s ease}.primary-cta:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(82,57,176,.28)}
+@keyframes headerGlow{from{opacity:.62;transform:translateX(-1.5%)}to{opacity:1;transform:translateX(1.5%)}}@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}@keyframes previewIn{from{opacity:0;transform:translateY(28px) scale(.97) rotate(1.5deg)}to{opacity:1;transform:rotate(.5deg)}}@keyframes previewGlow{from{opacity:.55;transform:scale(.96)}to{opacity:1;transform:scale(1.04)}}
+@media(max-width:699px){.site-nav{background:linear-gradient(115deg,#2a2038,#59409c)}.site-nav .nav-signin{display:none}.site-nav .nav-language select{max-width:66px}.site-nav .nav-cta{min-height:36px}}
+@media(prefers-reduced-motion:reduce){.site-nav::before,.hero-copy,.hero-preview,.hero-preview::after{animation:none}.site-nav .nav-links a,.site-nav .nav-signin,.site-nav .nav-cta,.feature-grid article,.steps article,.public-plans article,.feature-grid article>i,.steps article>i,.primary-cta{transition:none}}
+</style>
 <style scoped>.session-message{display:flex;align-items:flex-start;gap:.55rem;padding:.75rem .8rem;border:1px solid #dcd5f5;border-radius:9px;background:#f6f3ff;color:#6851bd;font-size:.75rem}</style>
+<style scoped>
+.website-page{min-height:100dvh;overflow:hidden;background:#faf9fc;color:#211f27}.site-nav{position:sticky;top:0;z-index:20;min-height:68px;display:flex;align-items:center;justify-content:space-between;padding:.75rem clamp(1rem,5vw,5rem);border-bottom:1px solid rgba(226,222,233,.85);background:rgba(255,255,255,.92);backdrop-filter:blur(16px)}.site-brand{display:flex;align-items:center;gap:.6rem;color:inherit;text-decoration:none}.site-brand>span{width:2.25rem;height:2.25rem;display:grid;place-items:center;border-radius:9px;background:linear-gradient(135deg,#8b70f2,#6849d6);color:#fff;font-size:.8rem;font-weight:800}.site-brand strong,.site-brand small{display:block}.site-brand strong{font-size:.85rem}.site-brand small{color:#8d8996;font-size:.56rem}.nav-links{display:none}.nav-actions{display:flex;align-items:center;gap:.5rem}.nav-language{display:flex;align-items:center;gap:.3rem;color:#77717e}.nav-language select{max-width:80px;border:0;background:transparent;color:#55505b;font-size:.65rem}.nav-signin{color:#5f5867;text-decoration:none;font-size:.68rem;font-weight:700}.nav-cta,.primary-cta,.public-plans a{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:9px;background:#7053dc;color:#fff;text-decoration:none;font-weight:700}.nav-cta{min-height:38px;padding:0 .75rem;font-size:.68rem}.hero-section{width:min(1180px,100%);display:grid;gap:2.5rem;margin:auto;padding:clamp(3.5rem,8vw,7rem) 1rem}.hero-label,.section-heading>span,.about-copy>span{color:#7053dc;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.hero-copy h1{max-width:760px;margin:.8rem 0 1.1rem;font-size:clamp(2.45rem,8vw,5.2rem);line-height:.98;letter-spacing:-.06em}.hero-copy>p{max-width:690px;color:#706b77;font-size:clamp(.9rem,2vw,1.08rem);line-height:1.75}.hero-actions{display:flex;flex-wrap:wrap;gap:.7rem;margin:1.7rem 0 1.15rem}.primary-cta,.secondary-cta{min-height:50px;padding:0 1.2rem;font-size:.76rem}.secondary-cta{display:inline-flex;align-items:center;justify-content:center;border:1px solid #ddd7e8;border-radius:9px;background:#fff;color:#39343f;text-decoration:none;font-weight:700}.hero-trust{display:flex;flex-wrap:wrap;gap:.8rem;color:#797480;font-size:.65rem}.hero-trust i{margin-right:.25rem;color:#41a979}.hero-preview{padding:.75rem;border:1px solid #e5e0ec;border-radius:17px;background:#fff;box-shadow:0 30px 80px rgba(48,34,82,.14);transform:rotate(.5deg)}.preview-top{display:flex;align-items:center;justify-content:space-between;padding:.35rem .2rem .8rem;color:#8d8793}.preview-top span{display:flex;gap:.25rem}.preview-top i{width:7px;height:7px;border-radius:50%;background:#ded9e5}.preview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}.preview-grid article{padding:.75rem;border:1px solid #ece8f0;border-radius:10px;background:#fcfbfd}.preview-grid article>i{color:#7458dd}.preview-grid span,.preview-grid strong,.preview-grid small{display:block}.preview-grid span{margin-top:.5rem;color:#7e7884;font-size:.55rem}.preview-grid strong{margin:.15rem 0;font-size:.92rem}.preview-grid small{color:#52a077;font-size:.5rem}.preview-activity{margin-top:.5rem;padding:.8rem;border:1px solid #ece8f0;border-radius:10px}.preview-activity>div{display:flex;justify-content:space-between;font-size:.6rem;font-weight:700}.preview-activity>div small{color:#918b96;font-weight:400}.preview-activity p{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.55rem;margin:.75rem 0 0;padding-top:.7rem;border-top:1px solid #f0edf2;font-size:.55rem}.preview-activity p>i{width:1.7rem;height:1.7rem;display:grid;place-items:center;border-radius:7px;background:#edfaf4;color:#36a673}.preview-activity p span small{display:block;color:#9b959f}.preview-activity p strong{font-size:.55rem}.features-section,.pricing-section,.how-section{padding:clamp(4rem,8vw,7rem) max(1rem,calc((100vw - 1180px)/2));}.features-section{background:#fff}.section-heading{max-width:650px;margin:0 auto 2.3rem;text-align:center}.section-heading h2,.about-copy h2{margin:.55rem 0 .75rem;font-size:clamp(1.8rem,5vw,3rem);line-height:1.08;letter-spacing:-.045em}.section-heading p,.about-copy p{color:#7d7782;font-size:.8rem;line-height:1.7}.feature-grid{display:grid;gap:.7rem}.feature-grid article{padding:1.25rem;border:1px solid #ebe7ef;border-radius:13px}.feature-grid article>i{width:2.4rem;height:2.4rem;display:grid;place-items:center;border-radius:9px;background:#f0ecff;color:#7053dc}.feature-grid h3{margin:1rem 0 .45rem;font-size:.88rem}.feature-grid p{margin:0;color:#817b86;font-size:.68rem;line-height:1.6}.about-section{display:grid;gap:2rem;align-items:center;padding:clamp(4rem,8vw,7rem) max(1rem,calc((100vw - 1180px)/2));background:#292136;color:#fff}.about-visual{min-height:280px;display:grid;place-items:center;padding:2rem;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(112,83,220,.3));text-align:center}.about-mark{width:5rem;height:5rem;display:grid;place-items:center;border-radius:20px;background:#7053dc;font-size:2rem}.about-visual strong,.about-visual span{display:block}.about-visual strong{margin-top:1rem;font-size:1.15rem}.about-visual span{color:#aaa1b4;font-size:.7rem}.about-copy p{color:#b5adbd}.about-copy>div{display:flex;gap:2rem;margin-top:1.5rem}.about-copy>div span,.about-copy strong,.about-copy small{display:block}.about-copy strong{font-size:1.4rem}.about-copy small{color:#a9a0b2;font-size:.58rem}.how-section{background:#fff;text-align:center}.steps{display:grid;gap:.8rem;text-align:left}.steps article{position:relative;padding:1.4rem;border:1px solid #ebe6f0;border-radius:14px}.steps article>span{position:absolute;right:1rem;top:1rem;color:#ded8e8;font-size:1.4rem;font-weight:800}.steps article>i{width:2.5rem;height:2.5rem;display:grid;place-items:center;border-radius:9px;background:#f0ecff;color:#7053dc}.steps h3{margin:1rem 0 .4rem;font-size:.85rem}.steps p{margin:0;color:#817b86;font-size:.67rem;line-height:1.6}.how-cta{margin-top:1.5rem}.billing-toggle{width:max-content;display:flex;margin:0 auto 1.5rem;padding:.25rem;border:1px solid #e2dce8;border-radius:10px;background:#fff}.billing-toggle button{padding:.55rem .8rem;border:0;border-radius:7px;background:transparent;color:#716b76;font-size:.65rem}.billing-toggle button.active{background:#2f2540;color:#fff}.billing-toggle small{color:#9fe1bd}.public-plans{display:grid;gap:.8rem}.public-plans article{position:relative;padding:1.3rem;border:1px solid #e6e1eb;border-radius:14px;background:#fff}.public-plans article.featured{border-color:#7458dd;box-shadow:0 14px 40px rgba(84,58,155,.13)}.popular{position:absolute;right:1rem;top:1rem;padding:.25rem .45rem;border-radius:99px;background:#ede8ff;color:#694ed1;font-size:.5rem;font-weight:800;text-transform:uppercase}.public-plans h3{font-size:1rem}.public-plans p{min-height:34px;color:#837d88;font-size:.65rem}.public-plans>article>strong{display:block;margin:1.1rem 0;font-size:1.35rem}.public-plans strong small{color:#8d8791;font-size:.55rem;font-weight:500}.public-plans ul{display:grid;gap:.55rem;margin:0 0 1.2rem;padding:0;list-style:none;color:#625d66;font-size:.65rem}.public-plans li i{margin-right:.4rem;color:#43a979}.public-plans a{min-height:43px;font-size:.68rem}.plans-loading{text-align:center;color:#807a85;font-size:.72rem}footer{display:grid;gap:.9rem;justify-items:center;padding:2rem 1rem;background:#211a2b;color:#fff;text-align:center}footer p,footer>span{margin:0;color:#91899c;font-size:.62rem}footer .site-brand small{color:#91899c}
+@media(min-width:700px){.feature-grid{grid-template-columns:repeat(2,1fr)}.public-plans{grid-template-columns:repeat(3,1fr)}footer{grid-template-columns:1fr 1fr 1fr;align-items:center;text-align:left}footer .site-brand{justify-self:start}footer>span{justify-self:end}}
+@media(min-width:900px){.nav-links{display:flex;gap:1.6rem}.nav-links a{color:#635e68;text-decoration:none;font-size:.68rem;font-weight:650}.hero-section{grid-template-columns:minmax(0,1.05fr) minmax(400px,.95fr);align-items:center}.feature-grid{grid-template-columns:repeat(4,1fr)}.about-section{grid-template-columns:1fr 1fr}.steps{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:430px){.site-brand small,.nav-language i{display:none}.nav-cta{padding:0 .6rem}.hero-section{padding-top:3rem}.hero-trust{display:grid}.preview-grid{grid-template-columns:1fr}.preview-grid article:nth-child(n+3){display:none}}
+</style>

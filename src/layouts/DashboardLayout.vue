@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import { useAuthStore } from "../stores/auth.store";
 import { updateLanguage } from "../services/auth.service.js";
 import { language, setLanguage } from "../i18n/index.js";
+import { getBillingOverview } from "../services/billing.service.js";
 
 defineProps({
   pageTitle: { type: String, default: "Dashboard" },
@@ -15,6 +16,7 @@ const authStore = useAuthStore();
 const isOpen = ref(false);
 const isCollapsed = ref(localStorage.getItem("sidebar_collapsed") === "true");
 const navElement = ref(null);
+const billing = ref(null);
 const navItems = [
   { label: "Dashboard", icon: "bi-grid", href: "/", roles: [] },
   { label: "Members", icon: "bi-people", href: "/members", roles: ["chairperson", "secretary"] },
@@ -33,6 +35,7 @@ const navItems = [
   { label: "Reports", icon: "bi-bar-chart", href: "/reports", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Users & Approvals", icon: "bi-shield-check", href: "/access", roles: ["chairperson", "treasurer", "secretary"] },
   { label: "Audit Logs", icon: "bi-activity", href: "/audit-logs", roles: ["chairperson", "treasurer", "secretary"] },
+  { label: "Plans & Billing", icon: "bi-credit-card", href: "/billing", roles: [] },
 ];
 const userRole = computed(() => authStore.user?.role || "Admin");
 const visibleNavItems = computed(() => navItems.filter(
@@ -58,6 +61,7 @@ onMounted(() => nextTick(() => {
   navElement.value.scrollTop = Number(sessionStorage.getItem("sidebar_scroll") || 0);
   navElement.value.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest" });
 }));
+onMounted(async()=>{try{billing.value=(await getBillingOverview()).data?.data?.subscription||null;}catch{/* Page-level requests report billing errors. */}});
 onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement.value?.scrollTop || 0)));
 </script>
 
@@ -100,6 +104,12 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
             <button type="button" @click="$router.go(0)"><i class="bi bi-arrow-repeat"></i><span>Refresh</span></button>
           </div>
         </header>
+        <div v-if="billing && ['trialing','expired','past_due','grace_period'].includes(billing.status)" class="subscription-banner" :class="billing.status">
+          <span v-if="billing.status==='trialing'"><strong>Free trial:</strong> {{ billing.days_remaining }} day{{ billing.days_remaining===1?'':'s' }} remaining.</span>
+          <span v-else-if="billing.status==='grace_period'"><strong>Payment grace period:</strong> renew now to avoid read-only access.</span>
+          <span v-else><strong>Read-only access:</strong> activate a plan to create or change records.</span>
+          <router-link to="/billing">View plans</router-link>
+        </div>
         <main><slot /></main>
       </section>
     </div>
@@ -215,6 +225,7 @@ onBeforeUnmount(() => sessionStorage.setItem("sidebar_scroll", String(navElement
 }
 
 .top-language{height:2.2rem;display:flex;align-items:center;gap:.25rem;padding:0 .45rem;border:1px solid #e5e4ea;border-radius:8px;background:#fff;color:#7659e8}.top-language select{border:0;outline:0;background:transparent;color:#4f4a56;font-size:.67rem;font-weight:700}
+.subscription-banner{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.55rem 1rem;background:#f0edff;color:#59439f;font-size:.7rem}.subscription-banner a{color:inherit;font-weight:700}.subscription-banner.expired,.subscription-banner.past_due{background:#fff0f1;color:#a93b47}.subscription-banner.grace_period{background:#fff5dd;color:#8c5c09}
 
 /* A strong, persistent route indicator keeps navigation context obvious. */
 .sidebar nav a:hover {

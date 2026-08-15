@@ -18,6 +18,7 @@ export const useAuthStore = defineStore("auth", {
     token: localStorage.getItem("token") || null,
     user: JSON.parse(localStorage.getItem("user") || "null"),
     language: localStorage.getItem("app_language") || "en",
+    organization: JSON.parse(localStorage.getItem("organization") || "null"),
     expiresAt: Number(localStorage.getItem("session_expires_at") || 0),
   }),
   getters: {
@@ -25,7 +26,7 @@ export const useAuthStore = defineStore("auth", {
     isAdmin: (state) => state.user?.role === "admin",
   },
   actions: {
-    setAuth(token, selectedLanguage) {
+    setAuth(token, selectedLanguage, organization) {
       const decoded = jwtDecode(token);
       this.token = token;
       this.expiresAt = Number(decoded.exp) * 1000;
@@ -34,6 +35,8 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(this.user));
       localStorage.setItem("app_language", this.language);
+      this.organization = organization || this.organization;
+      if (this.organization) localStorage.setItem("organization", JSON.stringify(this.organization));
       localStorage.setItem("session_expires_at", String(this.expiresAt));
       localStorage.setItem("session_last_activity", String(Date.now()));
       this.startSessionMonitoring();
@@ -85,6 +88,7 @@ export const useAuthStore = defineStore("auth", {
       this.token = null; this.user = null; this.expiresAt = 0;
       localStorage.removeItem("token"); localStorage.removeItem("user");
       localStorage.removeItem("session_expires_at"); localStorage.removeItem("session_last_activity");
+      localStorage.removeItem("organization"); this.organization=null;
       if (sessionTimer) { clearInterval(sessionTimer); sessionTimer = null; }
       if (!skipRedirect && window.location.pathname !== "/login") window.location.replace(`/login?reason=${reason}`);
     },

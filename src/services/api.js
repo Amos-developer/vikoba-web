@@ -24,8 +24,8 @@ api.interceptors.response.use(
       localStorage.removeItem("session_last_activity");
       window.dispatchEvent(new Event("session-expired"));
 
-      if (window.location.pathname !== "/login") {
-        window.location.replace("/login?reason=session_expired");
+      if (window.location.pathname !== "/sign-in") {
+        window.location.replace("/sign-in?reason=session_expired");
       }
     }
 
