@@ -18,7 +18,7 @@ const isCollapsed = ref(localStorage.getItem("sidebar_collapsed") === "true");
 const navElement = ref(null);
 const billing = ref(null);
 const navItems = [
-  { label: "Dashboard", icon: "bi-grid", href: "/", roles: [] },
+  { label: "Dashboard", icon: "bi-grid", href: "/dashboard", roles: [] },
   { label: "Members", icon: "bi-people", href: "/members", roles: ["chairperson", "secretary"] },
   { label: "Meetings", icon: "bi-calendar3", href: "/meetings", roles: [] },
   { label: "Financial Cycles", icon: "bi-calendar2-range", href: "/cycles", roles: ["chairperson", "treasurer", "secretary"] },

@@ -11,7 +11,7 @@ const router=useRouter();const auth=useAuthStore();const loading=ref(false);cons
 const form=ref({group_name:"",name:"",email:"",phone:"",password:""});
 const completedFields=computed(()=>[form.value.group_name,form.value.name,form.value.email,form.value.password.length>=8].filter(Boolean).length);
 const progress=computed(()=>`${completedFields.value/4*100}%`);
-const submit=async()=>{loading.value=true;errorMessage.value="";try{const response=await startTrial({...form.value,language:language.value});auth.setAuth(response.data.token,response.data.language,response.data.organization);setLanguage(response.data.language);await router.replace("/");}catch(error){errorMessage.value=error.response?.data?.message||"Unable to start trial.";}finally{loading.value=false;}};
+const submit=async()=>{loading.value=true;errorMessage.value="";try{const response=await startTrial({...form.value,language:language.value});auth.setAuth(response.data.token,response.data.language,response.data.organization);setLanguage(response.data.language);await router.replace("/dashboard");}catch(error){errorMessage.value=error.response?.data?.message||"Unable to start trial.";}finally{loading.value=false;}};
 </script>
 
 <template><AuthLayout><main class="onboarding-page">

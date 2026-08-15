@@ -3,8 +3,17 @@ import { computed, onMounted, ref } from "vue";
 import AuthLayout from "../../layouts/AuthLayout.vue";
 import { language, setLanguage } from "../../i18n/index.js";
 import { getPlans } from "../../services/billing.service.js";
+import "./website-header.css";
 
-const plans = ref([]);
+const defaultPlans=[
+  {id:"starter-month",code:"starter_monthly",name:"Starter",description:"Core VICOBA operations for small groups",price_tzs:15000,billing_interval:"month",member_limit:30},
+  {id:"growth-month",code:"growth_monthly",name:"Growth",description:"Complete operations for growing groups",price_tzs:35000,billing_interval:"month",member_limit:100},
+  {id:"professional-month",code:"professional_monthly",name:"Professional",description:"Advanced controls and support for large groups",price_tzs:75000,billing_interval:"month",member_limit:null},
+  {id:"starter-year",code:"starter_yearly",name:"Starter Annual",description:"Starter with two months free",price_tzs:150000,billing_interval:"year",member_limit:30},
+  {id:"growth-year",code:"growth_yearly",name:"Growth Annual",description:"Growth with two months free",price_tzs:350000,billing_interval:"year",member_limit:100},
+  {id:"professional-year",code:"professional_yearly",name:"Professional Annual",description:"Professional with two months free",price_tzs:750000,billing_interval:"year",member_limit:null},
+];
+const plans = ref(defaultPlans);
 const annualBilling = ref(false);
 const visiblePlans = computed(() => plans.value.filter((plan) =>
   plan.billing_interval === (annualBilling.value ? "year" : "month"),
@@ -14,7 +23,10 @@ const money = (value) => new Intl.NumberFormat("en-TZ", {
 }).format(value || 0);
 
 onMounted(async () => {
-  try { plans.value = (await getPlans()).data.data || []; } catch { plans.value = []; }
+  try {
+    const livePlans=(await getPlans()).data.data;
+    if(Array.isArray(livePlans)&&livePlans.length) plans.value=livePlans;
+  } catch { /* Keep the public fallback catalogue available during API maintenance. */ }
 });
 </script>
 

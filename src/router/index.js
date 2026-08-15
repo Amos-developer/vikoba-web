@@ -25,15 +25,12 @@ import SignInView from "../views/auth/SignInView.vue";
 
 const routes = [
   {
-    path: "/login",
+    path: "/",
     name: "login",
     component: LoginView,
-    meta: {
-      guestOnly: true,
-    },
   },
   {
-    path: "/",
+    path: "/dashboard",
     name: "dashboard",
     component: DashboardView,
     meta: {
@@ -60,6 +57,7 @@ const routes = [
     component: SharesView,
     meta: { requiresAuth: true },
   },
+  { path:"/login",redirect:"/" },
   { path:"/sign-in",name:"signIn",component:SignInView,meta:{guestOnly:true} },
   { path:"/start-trial",name:"startTrial",component:TrialSignupView,meta:{guestOnly:true} },
   {
