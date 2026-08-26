@@ -5,6 +5,7 @@ import AuthLayout from "../../layouts/AuthLayout.vue";
 import { login } from "../../services/auth.service";
 import { useAuthStore } from "../../stores/auth.store";
 import { language,setLanguage } from "../../i18n/index.js";
+import "./sign-in-mobile.css";
 
 const email=ref("");const password=ref("");const showPassword=ref(false);const loading=ref(false);const errorMessage=ref("");
 const router=useRouter();const route=useRoute();const auth=useAuthStore();

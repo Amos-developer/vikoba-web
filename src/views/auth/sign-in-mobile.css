@@ -1,0 +1,165 @@
+.signin-page,
+.signin-page *,
+.signin-page *::before,
+.signin-page *::after {
+  box-sizing: border-box;
+}
+
+.signin-page {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.signin-page .signin-card,
+.signin-page .heading,
+.signin-page form,
+.signin-page form > label,
+.signin-page .input {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Phone-first layout: content begins at the top and never relies on auto margins. */
+@media (max-width: 599px) {
+  .signin-page {
+    display: block !important;
+    min-height: 100dvh;
+    background: #fff !important;
+  }
+
+  .signin-page .signin-card {
+    min-height: 100dvh;
+    padding: 1rem !important;
+  }
+
+  .signin-page .signin-card header {
+    gap: .75rem;
+  }
+
+  .signin-page .brand {
+    min-width: 0;
+  }
+
+  .signin-page .brand > span {
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 auto;
+  }
+
+  .signin-page .brand small {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .signin-page header label {
+    flex: 0 0 auto;
+  }
+
+  .signin-page header select {
+    max-width: 86px;
+    padding: .35rem .2rem;
+  }
+
+  .signin-page .heading {
+    margin: 2.25rem 0 1.5rem !important;
+    padding-top: 0 !important;
+  }
+
+  .signin-page .heading > a {
+    margin-bottom: 1.75rem !important;
+  }
+
+  .signin-page .heading h1 {
+    margin: .45rem 0 .6rem;
+    font-size: clamp(1.65rem, 8vw, 2rem) !important;
+    line-height: 1.08 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .signin-page .heading p {
+    max-width: 32rem;
+    margin: 0;
+    font-size: .78rem !important;
+    line-height: 1.55;
+  }
+
+  .signin-page form {
+    gap: 1rem !important;
+  }
+
+  .signin-page form > label {
+    gap: .45rem;
+    font-size: .75rem !important;
+  }
+
+  .signin-page .input {
+    min-height: 52px !important;
+    padding: 0 .8rem !important;
+    border-radius: 10px !important;
+  }
+
+  .signin-page .input input {
+    min-width: 0;
+    font-size: 16px !important;
+  }
+
+  .signin-page .input button {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0;
+  }
+
+  .signin-page .submit {
+    width: 100%;
+    min-height: 52px !important;
+    margin-top: .15rem;
+    border-radius: 10px !important;
+    font-size: .8rem !important;
+  }
+
+  .signin-page .message {
+    align-items: flex-start;
+    width: 100%;
+    padding: .8rem !important;
+    font-size: .72rem !important;
+    line-height: 1.45;
+  }
+
+  .signin-page .trial {
+    margin: 1.25rem 0 0 !important;
+    padding-bottom: max(.5rem, env(safe-area-inset-bottom));
+    font-size: .72rem !important;
+  }
+}
+
+@media (max-width: 359px) {
+  .signin-page .signin-card {
+    padding: .85rem !important;
+  }
+
+  .signin-page .brand small,
+  .signin-page header label > i {
+    display: none;
+  }
+
+  .signin-page .heading {
+    margin-top: 1.75rem !important;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .signin-page .signin-card {
+    width: min(100%, 500px) !important;
+    min-height: auto !important;
+  }
+
+  .signin-page .heading {
+    margin: 2.5rem 0 1.75rem !important;
+    padding-top: 0 !important;
+  }
+}
