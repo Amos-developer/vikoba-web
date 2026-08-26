@@ -5,6 +5,7 @@ import LoginView from "../views/auth/LoginView.vue";
 import DashboardView from "../views/dashboard/DashboardView.vue";
 import LoansView from "../views/loans/LoansView.vue";
 import MembersView from "../views/Members/MembersView.vue";
+import MemberProfileView from "../views/Members/MemberProfileView.vue";
 import PenaltiesView from "../views/penalties/PenaltiesView.vue";
 import TransactionsView from "../views/transactions/TransactionsView.vue";
 import RepaymentsView from "../views/repayments/RepaymentsView.vue";
@@ -58,6 +59,7 @@ const routes = [
     component: SharesView,
     meta: { requiresAuth: true },
   },
+  { path:"/members/:id",name:"MemberProfile",component:MemberProfileView,meta:{requiresAuth:true} },
   { path:"/login",redirect:"/" },
   { path:"/sign-in",name:"signIn",component:SignInView,meta:{guestOnly:true} },
   { path:"/start-trial",name:"startTrial",component:TrialSignupView,meta:{guestOnly:true} },

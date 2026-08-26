@@ -4,6 +4,8 @@ export const getMembers = () => {
   return api.get("/members");
 };
 
+export const getMemberProfile = (id) => api.get(`/members/${id}`);
+
 export const createMember = (payload) => {
   return api.post("/members", payload);
 };
