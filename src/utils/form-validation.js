@@ -4,8 +4,21 @@ export const TANZANIA_PHONE_PATTERN = "\\+255[67][0-9]{8}";
 export const TANZANIA_PHONE_MESSAGE = "Phone must start with +255 and contain 9 valid mobile digits, for example +255712345678.";
 export const normalizeTanzanianPhone = (value) => String(value ?? "").trim().replace(/[\s()-]/g, "");
 export const isValidTanzanianPhone = (value) => /^\+255[67]\d{8}$/.test(normalizeTanzanianPhone(value));
+export const sanitizePhoneInput = (event) => {
+  const input=event.target;const raw=String(input.value??"");
+  const sanitized=(raw.startsWith("+")?"+":"")+raw.replace(/\D/g,"").slice(0,12);
+  input.value=sanitized;
+  return sanitized;
+};
+export const preventNonPhoneInput = (event) => {
+  if(!event.data)return;
+  const input=event.target;
+  const isDigit=/^\d+$/.test(event.data);
+  const isLeadingPlus=event.data==="+"&&input.selectionStart===0&&!input.value.includes("+");
+  if(!isDigit&&!isLeadingPlus)event.preventDefault();
+};
 export const validatePhoneElement = (event, optional = false) => {
-  const input=event.target;const normalized=normalizeTanzanianPhone(input.value);
+  const input=event.target;sanitizePhoneInput(event);const normalized=normalizeTanzanianPhone(input.value);
   const valid=optional&&!normalized?true:isValidTanzanianPhone(normalized);
   input.setCustomValidity(valid?"":TANZANIA_PHONE_MESSAGE);
   if(valid&&normalized)input.value=normalized;

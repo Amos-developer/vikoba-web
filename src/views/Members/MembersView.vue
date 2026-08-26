@@ -10,7 +10,7 @@ import {
 } from "../../services/member.service.js";
 import { useAuthStore } from "../../stores/auth.store.js";
 import { language } from "../../i18n/index.js";
-import { isValidTanzanianPhone, normalizeTanzanianPhone, TANZANIA_PHONE_PATTERN, validatePhoneElement } from "../../utils/form-validation.js";
+import { isValidTanzanianPhone, normalizeTanzanianPhone, preventNonPhoneInput, sanitizePhoneInput, TANZANIA_PHONE_PATTERN, validatePhoneElement } from "../../utils/form-validation.js";
 
 const authStore = useAuthStore();
 const { isAdmin } = storeToRefs(authStore);
@@ -444,7 +444,7 @@ onMounted(loadMembers);
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Phone</label>
-              <input v-model.trim="form.phone" class="form-control" type="tel" inputmode="tel" autocomplete="tel" :pattern="TANZANIA_PHONE_PATTERN" maxlength="13" placeholder="+255712345678" title="Use +255 followed by 9 mobile digits" required @input="validatePhoneElement" @blur="validatePhoneElement" />
+              <input v-model.trim="form.phone" class="form-control" type="tel" inputmode="tel" autocomplete="tel" :pattern="TANZANIA_PHONE_PATTERN" maxlength="13" placeholder="+255712345678" title="Use +255 followed by 9 mobile digits" required @beforeinput="preventNonPhoneInput" @input="form.phone=sanitizePhoneInput($event);validatePhoneElement($event)" @blur="validatePhoneElement" />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Email</label>
