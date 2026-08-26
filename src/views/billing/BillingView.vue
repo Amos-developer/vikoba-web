@@ -2,13 +2,14 @@
 import { computed,onMounted,ref } from "vue";
 import DashboardLayout from "../../layouts/DashboardLayout.vue";
 import { cancelSubscription,createCheckout,getBillingOverview,getPlans } from "../../services/billing.service.js";
+import { confirmAction } from "../../services/alert.service.js";
 const plans=ref([]);const overview=ref(null);const loading=ref(true);const processing=ref(null);const errorMessage=ref("");const payment=ref(null);
 const subscription=computed(()=>overview.value?.subscription||{});const canManage=computed(()=>overview.value?.membership?.role==="owner"||overview.value?.membership?.is_billing_admin);
 const money=value=>new Intl.NumberFormat("en-TZ",{style:"currency",currency:"TZS",maximumFractionDigits:0}).format(value||0);
 const date=value=>value?new Date(value).toLocaleDateString():"—";
 const load=async()=>{loading.value=true;errorMessage.value="";try{const [planResponse,billingResponse]=await Promise.all([getPlans(),getBillingOverview()]);plans.value=planResponse.data.data;overview.value=billingResponse.data.data;}catch(error){errorMessage.value=error.response?.data?.message||"Unable to load billing.";}finally{loading.value=false;}};
 const choose=async plan=>{processing.value=plan.id;errorMessage.value="";try{const response=await createCheckout(plan.id);payment.value=response.data.data;if(payment.value.checkout_url)window.open(payment.value.checkout_url,"_blank","noopener");await load();}catch(error){errorMessage.value=error.response?.data?.message||"Unable to create payment request.";}finally{processing.value=null;}};
-const cancel=async()=>{if(!confirm("Cancel renewal at the end of the current billing period?"))return;try{await cancelSubscription();await load();}catch(error){errorMessage.value=error.response?.data?.message||"Unable to cancel subscription.";}};onMounted(load);
+const cancel=async()=>{const confirmed=await confirmAction({title:"Cancel subscription renewal?",text:"Your plan will remain active until the end of the current billing period.",confirmText:"Cancel renewal",danger:true});if(!confirmed)return;try{await cancelSubscription();await load();}catch(error){errorMessage.value=error.response?.data?.message||"Unable to cancel subscription.";}};onMounted(load);
 </script>
 <template><DashboardLayout page-title="Plans & Billing" page-subtitle="Subscription management">
 <section class="page-header"><div class="page-header-copy"><p class="page-header-label">{{ overview?.organization?.name }}</p><h2>Plans & billing</h2><p class="page-header-text mb-0">Manage your group subscription, payments, invoices, and trial status.</p></div></section>

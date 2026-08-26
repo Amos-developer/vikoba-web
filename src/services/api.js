@@ -1,4 +1,5 @@
 import axios from "axios";
+import { apiErrorMessage, errorAlert, successAlert } from "./alert.service.js";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
@@ -15,8 +16,15 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toUpperCase();
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && response.config.showSuccessAlert !== false) {
+      successAlert(response.data?.message || "Completed successfully.");
+    }
+    return response;
+  },
   (error) => {
+    if (error.config?.showErrorAlert !== false) errorAlert(apiErrorMessage(error));
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
