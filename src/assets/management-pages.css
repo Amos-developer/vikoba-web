@@ -279,6 +279,9 @@
 .modal-panel.confirm-panel { max-width: 440px; }
 
 .app-toast { border:1px solid #ececf1 !important; border-radius:12px !important; box-shadow:0 12px 38px rgba(24,24,27,.16) !important; font-family:inherit !important; }
+.swal2-container { z-index: 20000 !important; }
+.swal2-container.swal2-top-end { padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem !important; }
+.swal2-container .app-toast { position: relative; z-index: 20001; min-width: min(360px, calc(100vw - 2rem)); background: #fff !important; }
 .app-toast .swal2-title { color:#302e35 !important; font-size:.8rem !important; font-weight:600 !important; line-height:1.45 !important; }
 .app-alert-dialog { width:min(92vw,440px) !important; border-radius:16px !important; padding:1.35rem !important; font-family:inherit !important; }
 .app-alert-dialog .swal2-title { color:#302e35; font-size:1.05rem; }

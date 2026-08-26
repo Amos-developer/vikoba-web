@@ -22,6 +22,7 @@ import SharesView from "../views/shares/SharesView.vue";
 import BillingView from "../views/billing/BillingView.vue";
 import TrialSignupView from "../views/auth/TrialSignupView.vue";
 import SignInView from "../views/auth/SignInView.vue";
+import PlatformAdminView from "../views/platform/PlatformAdminView.vue";
 
 const routes = [
   {
@@ -139,6 +140,7 @@ const routes = [
     meta: { requiresAuth: true },
   },
   { path:"/billing",name:"Billing",component:BillingView,meta:{requiresAuth:true} },
+  { path:"/admin-panel",name:"PlatformAdmin",component:PlatformAdminView },
 ];
 
 const router = createRouter({
