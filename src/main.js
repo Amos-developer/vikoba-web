@@ -10,6 +10,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./assets/management-pages.css";
 import { initializeTablePagination, paginate } from "./directives/paginate.js";
 import { initializeLocalization } from "./i18n/index.js";
+import { initializeFormValidation } from "./utils/form-validation.js";
 
 const app = createApp(App);
 
@@ -20,3 +21,4 @@ app.directive("paginate", paginate);
 app.mount("#app");
 initializeTablePagination();
 initializeLocalization();
+initializeFormValidation();

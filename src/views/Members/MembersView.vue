@@ -10,6 +10,7 @@ import {
 } from "../../services/member.service.js";
 import { useAuthStore } from "../../stores/auth.store.js";
 import { language } from "../../i18n/index.js";
+import { isValidTanzanianPhone, normalizeTanzanianPhone, TANZANIA_PHONE_PATTERN, validatePhoneElement } from "../../utils/form-validation.js";
 
 const authStore = useAuthStore();
 const { isAdmin } = storeToRefs(authStore);
@@ -131,6 +132,12 @@ const loadMembers = async () => {
 const submitMember = async () => {
   if (!form.value.first_name || !form.value.last_name || !form.value.phone) {
     formError.value = "First name, last name, and phone are required.";
+    return;
+  }
+
+  form.value.phone = normalizeTanzanianPhone(form.value.phone);
+  if (!isValidTanzanianPhone(form.value.phone)) {
+    formError.value = "Phone must start with +255 and contain 9 valid mobile digits, for example +255712345678.";
     return;
   }
 
@@ -429,19 +436,19 @@ onMounted(loadMembers);
           <div class="row g-3">
             <div class="col-12 col-md-6">
               <label class="form-label">First name</label>
-              <input v-model="form.first_name" class="form-control" required />
+              <input v-model.trim="form.first_name" class="form-control" minlength="2" maxlength="100" required />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Last name</label>
-              <input v-model="form.last_name" class="form-control" required />
+              <input v-model.trim="form.last_name" class="form-control" minlength="2" maxlength="100" required />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Phone</label>
-              <input v-model="form.phone" class="form-control" required />
+              <input v-model.trim="form.phone" class="form-control" type="tel" inputmode="tel" autocomplete="tel" :pattern="TANZANIA_PHONE_PATTERN" maxlength="13" placeholder="+255712345678" title="Use +255 followed by 9 mobile digits" required @input="validatePhoneElement" @blur="validatePhoneElement" />
             </div>
             <div class="col-12 col-md-6">
               <label class="form-label">Email</label>
-              <input v-model="form.email" class="form-control" type="email" />
+              <input v-model.trim="form.email" class="form-control" type="email" maxlength="255" autocomplete="email" />
             </div>
           </div>
 
